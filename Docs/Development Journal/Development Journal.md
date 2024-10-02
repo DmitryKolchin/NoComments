@@ -1,40 +1,38 @@
-## Pre Production
+## Pre-Production
 
-### Planning the proof of concept prototypes
+### Planning Proof of Concept Prototypes
 
-For the October I've planned finishing two prototypes - Combat Prototype and Stealth System Prototype. For better organisation of the project I created a ClickUp workspace for up-to date task tracking, so I don't need to keep it all in my head:
+For October, I have outlined the development of two key prototypes: the **Combat Prototype** and the **Stealth System Prototype**. To streamline the workflow and ensure efficient task management, I established a dedicated ClickUp workspace for real-time task tracking. This eliminates the need to track progress  in my head and provides a clear, organised project overview.
 
 <iframe class="clickup-embed" src="https://sharing.clickup.com/9015630444/c/h/8cnz6kc-115/69343aec5fbc962" onwheel="" width="100%" height="700px" style="background: transparent; border: 1px solid #ccc;"></iframe>
 
-Basically, there are two milestones - stealth prototype and combat prototype. 
-Stealth prortype has following subtasks:
-- Implementing switching between standing and crouching for the player
-- Add player detection to the enemy (by sight)
-- Implement levels of enemy awareness of the player 
-- Add invisibility zone 
-- Utilise PCG to add grass to invisibility zone
+The project is divided into two primary milestones: the **Stealth Prototype** and the **Combat Prototype**. Each prototype is further broken down into specific subtasks to ensure a clear development path.
 
-Combat Prototype has following subtasks:
-- Implement hit
-- Implement block
-- Implement attacking NPC behavior
-- Camera Soft-Lock on the character
+#### Stealth Prototype Subtasks:
+- **Player Stance Control**: Implementing mechanics for switching between standing and crouching, giving players the ability to dynamically alter their movement posture.
+- **Enemy Detection**: Adding a system where enemies can detect the player based on line of sight.
+- **Enemy Awareness Levels**: Creating multiple states of enemy awareness to simulate realistic stealth mechanics.
+- **Invisibility Zones**: Introducing zones where the player can remain hidden from enemies, enhancing the stealth gameplay.
+- **Procedural Content Generation (PCG) for Grass**: Using PCG to populate invisibility zones with grass, adding a visual cue for players.
 
-Task "Research State Tree" is shared for both of the prototypes since the state tree system is required in both of the prototypes.
+#### Combat Prototype Subtasks:
+- **Combat Mechanics**: Developing basic hit and block mechanics to lay the foundation for player combat.
+- **NPC Combat Behaviour**: Implementing AI for non-player characters (NPCs) to react to player attacks.
+- **Camera Soft-Lock**: Integrating a camera system that soft-locks onto targets during combat for a more focused player experience.
 
+The task titled **Research State Tree** is a shared objective across both prototypes, as a unified state tree system is essential for managing the different states in both combat and stealth mechanics.
 
+### Integrating Default Unreal Skeletal Meshes
 
-### Importing  default Unreal Skeletal Meshes
-
-Since the prototype does not require any complicated visuals, I decided to put default Unreal's skeletal meshes to the project so I can use them for both player and NPC characters
+Given that the prototype phase does not require complex visual assets, I imported Unreal Engine's default skeletal meshes to be used for both player and NPC characters. This approach saves time on asset creation while still providing functional models for testing gameplay mechanics.
 
 ![](./Resources/PreProduction/Manny.png)
 ![](./Resources/PreProduction/Quinn.png)
 
-# Setting up basic controllable character
+### Setting Up the Basic Controllable Character
 
-Using [Enhanced Input](https://dev.epicgames.com/documentation/en-us/unreal-engine/enhanced-input-in-unreal-engine) to setup the character basic character inputs. The Enhaned Input is the new system which is currently replacing the deprecated previous input implementation. The capability of adding and removing Mapping Contexts will allow me to imlement logic within character for both Combat and Stealth inputs without manually writing code to disable them. For instance, i do not need combat inputs logic within the stealth section, so I will be able to just remove the combat mapping context and add the stealth mapping context.
-For now I created a separate mapping context for default actions - walking and rotating the camera. To avoid code duplication, I separated these inputs into a distinct Mapping Context so I can have it within both prototypes.
+For player character control, I utilised Unreal Engine’s [Enhanced Input](https://dev.epicgames.com/documentation/en-us/unreal-engine/enhanced-input-in-unreal-engine) system. This system, which is replacing the deprecated input implementation, allows for greater flexibility in managing input contexts. By leveraging **Mapping Contexts**, I can efficiently switch between combat and stealth controls without the need for manual input handling.
 
+For example, combat inputs are unnecessary during stealth gameplay. By removing the combat mapping context and adding the stealth mapping context, I can ensure that only relevant inputs are active. To ensure modularity, I created a separate **Mapping Context** for basic actions like movement and camera control. This context is shared across both prototypes to avoid redundant code.
 
-
+<iframe width="100%" height="500px" src="https://blueprintue.com/render/yz-ogp8q/" scrolling="no" allowfullscreen></iframe>
