@@ -343,6 +343,135 @@ void UDamageDealingSphereComponent::OnBeginOverlap(UPrimitiveComponent* Overlapp
 
 ### Testing 
 After all the inputs been setup, now the gameplay looks like this
+![](./Resources/Combat%20System/)
+
+Here’s a refactored version of the markdown document for improved clarity, depth, and structure:
+
+## AI Behaviour
+
+### Introduction to State Trees
+
+One of my objectives for this project was to become familiar
+ with Unreal Engine's new State Trees tool. State
+  Trees can be applied to a wide range of cases
+   involving stateful data, including AI behaviours.  [(Your First 60 Minutes with StateTree | Tutorial, 2024)](https://dev.epicgames.com/community/learning/tutorials/lwnR/unreal-engine-your-first-60-minutes-with-statetree)
+
+Here’s a summary of the essential terminology from the documentation:
+- **Schema** - Sets up use-case specific data and can constrain or expand which nodes may be used within the State Tree.
+- **Context** - Data provided by the schema and available to any task or condition in the State Tree.
+- **Parameters** - Additional data defined by the user for use within the State Tree. Parameters can have custom values assigned when running the State Tree or linking it through a component like StateTreeComponent.
+- **Property Categories** - Metadata for task and condition properties to enable data binding. Key categories include:
+  - **Context** - Automatically binds to the best-matching context data but can be overridden.
+  - **Input** - A property required by a task/condition that must be bound for the State Tree to compile. Additional public properties can have optional bindings or specified values.
+  - **Output** - A property output from a task/condition, bindable as an input for other tasks or conditions. Cannot be bound to parameters.
+- **State** - Organizational layers within State Trees that can contain child states, tasks, entry conditions, and transitions.
+- **Transition** - Rules defining when a state should switch to another state in the tree.
+
+These elements form the basis of the Combat State Tree for AI.
+
+### AI Decision-Making
+
+Before implementing the State Tree, I designed a conceptual scheme to outline the AI's intended behaviour.
+
+![](./Resources/Combat%20System/AILogicScheme.jpg)
+
+This diagram shows the general flow for AI decision-making within combat.
+
+### Combat State Tree Structure
+
+Here is an overview of the Combat State Tree designed for AI:
+
+![](./Resources/Combat%20System/State%20Tree.png)
+
+Let’s go through each component in detail.
+
+#### Schema
+
+The **Schema** defines Context variables initialized by the State Tree Component instance for the specific actor running the State Tree. Here, I’m using the default State Tree AI Component Schema, which provides access to the AI Controller within State Tree tasks—a sufficient setup for managing in-tree logic.
+
+#### Parameters
+
+All parameters are organized within a separate Data Asset, providing these benefits:
+- Balancing adjustments are isolated to a single file, allowing a game designer to modify values without needing to search through the State Tree.
+- Commonly-used values (like attack range) are declared in one location, reducing "magic numbers" and improving maintainability.
+
+#### Theme
+
+This section allows for assigning different colours to various states, which visually separates different parts of the State Tree as it grows more complex. While purely cosmetic, it improves readability and navigation.
+
+#### Root State
+
+The **Root** state is the default state selected when the State Tree is activated. It will attempt to transition to a child state, iterating through them until a valid entry condition is met. Since **Blocking** has no entry conditions, the Root state will always transition directly to Blocking.
+
+#### Blocking State
+
+The **Blocking** state contains several tasks:
+
+1. **ST_TaskBlock** (displayed as BP_Block in the State Tree) initiates blocking in the NPC’s Combat Component at the start of the state and ends blocking when the state is complete.
+   
+   <iframe src="https://blueprintue.com/render/75h3q374/" width="100%" height="500" scrolling="no" allowfullscreen></iframe>
+
+   Events **Enter State** and **State Completed** are triggered by the State Tree as needed, allowing us to define relevant logic.
+
+   To access the AI Controller, we need to mark its variable category as **Context**. Here’s an example of setting this context-based variable:
+   
+   ![](./Resources/Combat%20System/StateTree/ContextBasedVariable.jpg)
+
+   Now, this variable appears in the State Tree, initialized with the AI Controller context value:
+
+   ![](./Resources/Combat%20System/StateTree/BlockContextInitilization.png)
+
+2. **STTask_WaitRandomTimeInRange** pauses for a random duration and then exits the state, introducing a randomised blocking time. Here’s the task’s code:
+
+   <iframe src="https://blueprintue.com/render/0w30td-v/" width="100%" height="500" scrolling="no" allowfullscreen></iframe>
+
+   This task uses a **Waiting Time Range** parameter, which can be defined within the State Tree or derived from a parameter Data Asset. To make this variable instance-editable, we set its category to **Parameters** and check the **Instance Editable** box:
+
+   ![](./Resources/Combat%20System/StateTree/ParameterVariable.jpg)
+
+   This setup allows us to initialize it with values from the parameter Data Asset or other State Tree parameters:
+
+   ![](./Resources/Combat%20System/StateTree/ParametersInitialization.png)
+
+3. **STTask_GetFirstActorOfClass** finds the first actor of a specified class, in this case, the player character. This task accepts an actor class parameter and outputs a reference to the found actor:
+
+   <iframe src="https://blueprintue.com/render/v00ik7cy/" width="100%" height="500" scrolling="no" allowfullscreen></iframe>
+
+   To set this task’s output parameter, we categorize it as **Output** and check **Instance Editable**:
+
+   ![](./Resources/Combat%20System/StateTree/OutputVariable.jpg)
+
+   This parameter is then available as input for subsequent tasks in this state:
+
+   ![](./Resources/Combat%20System/StateTree/OutputParametersUsage.png)
+
+4. **STTask_MoveToActor** is a custom task based on the Move To node. Unlike the default, this version restarts movement once the target is reached, enabling continuous tracking of the player. Using the default Move To Task was not feasible, as it exits the state upon completion.
+
+The **Blocking** state has two possible transitions:
+- **Attack State** if the player is within attack range.
+- **Idle State** in all other cases.
+
+#### Idle State
+
+The **Idle** state functions similarly to **Blocking** (excpet for the fact it does not have STTask_Block in it), with the following transition rules:
+- Transition to **Blocking** if the opponent is blocking.
+- Transition to **Attack** if the opponent is within attack range.
+- Transition to **Root** otherwise.
+- Can transition to **Stunned** if the **AI.Event.Stunned** tag is applied (e.g., when the NPC takes damage in BP_NPC).
+
+#### Attack State
+
+The **Attack** state contains a single task, **STTask_Attack**, which triggers the attack logic in the NPC's Combat Component. The state transitions to **Idle** once the attack completes.
+
+#### Stunned State
+
+The **Stunned** state is similar to the Attack state. It plays the stunned animation and transitions back to **Blocking** upon completion.
+
+---
+
+This completes the current layout of the Combat State Tree. Here’s the resulting AI behaviour flow:
+
+
 
 # Declared Assets
 
