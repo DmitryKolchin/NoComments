@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "PatrolPathpoint.h"
 #include "GameFramework/Actor.h"
+#include "Components/BillboardComponent.h"
 #include "PatrolPathpointManager.generated.h"
 
 UENUM(BlueprintType)
@@ -52,8 +53,6 @@ public:
 	virtual void PostDuplicate(EDuplicateMode::Type DuplicateMode) override;
 
 	virtual void PostLoad() override;
-
-	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
 
 
 private:

@@ -103,13 +103,6 @@ void APatrolPathpointManager::PostLoad()
 	GetWorld()->GetTimerManager().SetTimerForNextTick( this, &APatrolPathpointManager::RecalculateAllPathpointsIndexes );
 }
 
-void APatrolPathpointManager::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
-{
-	Super::PostEditChangeProperty( PropertyChangedEvent );
-
-	// In case we undo delete of the pathpoint
-	RecalculateAllPathpointsIndexes();
-}
 
 FPatrolPathData APatrolPathpointManager::GetPatrolPathData() const
 {

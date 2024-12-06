@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Components/BillboardComponent.h"
 #include "PatrolPathpoint.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam( FPatrolPathpointDelegate, int32, PathpointIndex );

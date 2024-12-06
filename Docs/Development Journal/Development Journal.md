@@ -1,3 +1,11 @@
+# Advanced Games Programming Project
+**Advanced Programming**
+
+**Dmitrii Kolchin**  
+**2220982**
+
+[Github](https://github.com/DmitryKolchin/NoComments)
+
 ## Pre-Production
 
 ### Planning Proof of Concept Prototypes
@@ -172,76 +180,79 @@ And after retargeting all the animations, I removed all the old packs animations
 
 ### Adding block state to the Anim Blueprint
 
-Before actually jumping into implementing all of the logic, I decided to add the block state support within the animation blueprint.
-The block animation has fixed legs - which is not good, since I need the player to be able to move while blocking.
-To address this issue, I decided to add the merge per bone node inside the animation blueprint.
-How it works - it takes the initial locomotion pose, and blends it with the block animation starting with spine_01 bone.
-It takes the result of blend if the ```IsBlockActive``` variable is true and default locomotion otherwise. This is how 
-it looks now 
+### Development Journal Entry
+
+#### Block State Implementation
+Before proceeding with the complete logic implementation, I began by adding block state support within the Animation Blueprint. The current block animation has fixed legs, which restricts player movement while blocking—an issue that needed addressing.
+
+To resolve this, I added the **Merge Per Bone** node within the Animation Blueprint. This node blends the initial locomotion pose with the block animation, starting from the `spine_01` bone. The blended result is used if the `IsBlockActive` variable is `true`; otherwise, the default locomotion pose is applied. Below is the updated setup:
 
 ![](./Resources/Combat%20System/Locomotion.png)
 
-### Debugging
+*Figure 12. Animation Blueprint*
 
-In order to make the Blueprint Debugging process easier, I designed a custom function ```Print Debug``` which takes debug message 
-and the function name. This will help me identify the problems easier.
+#### Debugging
+To simplify the Blueprint debugging process, I designed a custom function, `Print Debug`, which accepts a debug message and the function name as parameters. This utility aids in identifying issues more efficiently.
 
 <iframe width="100%" height="500px" src="https://blueprintue.com/render/vk0i87ep/" scrolling="no" allowfullscreen></iframe>
 
-### BP_Combat Component
-Since I am currently working on the prototype and time is constrained, anything that can be done in blueprints will be done in blueprints
-Combat Component does not require any C++ functionality, so it is done via blueprints.
+*Figure 13. Debugging function*
+#### BP_Combat Component
+Given the constraints of working on a prototype and the limited time available, I opted to implement as much functionality as possible using Blueprints. Since the Combat Component does not require C++ functionality, it was created entirely in Blueprints.
 
-All the attack animations gonna have some shared logic, which is
-- Check all the references
-- Check that none other montage playing
-- Play Montage
-- Spawn Damage Dealing Component
+All attack animations share the following logic:
+- Verify all references.
+- Ensure no other montage is currently playing.
+- Play the desired montage.
+- Spawn the Damage Dealing Component.
 
-The only difference gonna be the animation and root bone to which is Damage Dealing Component attached.
-So I decided to incapsulate it all in ```Play Attack Montage``` function:
+The only variation is the specific animation and the root bone to which the Damage Dealing Component is attached. To streamline this, I encapsulated the shared logic within the `Play Attack Montage` function:
 
 <iframe width="100%" height="500px" src="https://blueprintue.com/render/cedwnnya/" scrolling="no" allowfullscreen></iframe>
 
-So each of the attack functions gonna look similar to this:
+*Figure 14. Play Attack Montage function implementation*
+
+Each attack function now resembles the following structure:
 
 <iframe width="100%" height="500px" src="https://blueprintue.com/render/5nmt71w2/" scrolling="no" allowfullscreen></iframe>
 
+*Figure 15. Jab Right Hand function implementation*
 
-### Combat Animations Data Asset
-I cannot inherit from generic UDataAsset class in blueprints, so this class must be declared in C++. Since it does not hold any functionality and serves only as data storage asset, i deleted the .cpp file and kept only .h file in the project.
-The class itself looks like this:
+#### Combat Animations Data Asset
+Since inheriting from the generic `UDataAsset` class is not possible in Blueprints, this class was declared in C++. As it functions solely as a data storage asset, the `.cpp` file was deleted, leaving only the `.h` file in the project. The class is defined as follows:
+
 ```cpp
 /**
- * Base class for data assets that store combat related animations
+ * Base class for data assets that store combat-related animations
  */
-UCLASS( Blueprintable )
+UCLASS(Blueprintable)
 class NOCOMMENTS_API UCombatAnimationsDataAsset : public UDataAsset
 {
 	GENERATED_BODY()
 
 public:
-	UPROPERTY( EditDefaultsOnly, BlueprintReadOnly, Category = "Jabs" )
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Jabs")
 	TArray<TSoftObjectPtr<UAnimMontage>> RightJabMontages;
 
-	UPROPERTY( EditDefaultsOnly, BlueprintReadOnly, Category = "Jabs" )
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Jabs")
 	TArray<TSoftObjectPtr<UAnimMontage>> LeftJabMontages;
 };
-
 ```
+*Figure 16. Combat Animations Data Asset*
 
-For now it has only 2 arrays for Jabs. But it can be easily scaled later when required.
-### Damage Dealing Sphere 
-I cannopt inherit blueprint classes from USphereComponent as well, so the Damage Dealing Component is also declared in C++.
-Here is the class header:
+Currently, it contains two arrays for jab animations, but it is designed to be scalable for future additions.
+
+#### Damage Dealing Sphere Component
+As inheriting Blueprint classes from `USphereComponent` is also not possible, the Damage Dealing Component was declared in C++. Below is its header file:
+
 ```cpp
-UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent), Blueprintable )
+UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent), Blueprintable)
 class NOCOMMENTS_API UDamageDealingSphereComponent : public USphereComponent
 {
 	GENERATED_BODY()
 
 protected:
-	UPROPERTY( meta=(ExposeOnSpawn = true), BlueprintReadOnly  )
+	UPROPERTY(meta = (ExposeOnSpawn = true), BlueprintReadOnly)
 	float Damage = 10.0f;
 
 public:
@@ -251,77 +262,72 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-
-
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
 private:
 	UFUNCTION()
-	void OnOwnerMontageEnded( UAnimMontage* Montage, bool bInterrupted );
+	void OnOwnerMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 
 	UFUNCTION()
-	void OnBeginOverlap( UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult );
+	void OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 };
-
 ```
-From interesting details - the Damage value in ```Expose on Spawn``` modifier true, which allowed me to initialize it with the same 
-node I created it.
+*Figure 17. Damage Dealing Sphere Component*
 
-Let's break down the functions:
-BeginPlay perfroms a series of checks and then binds to the end of the montage of owning player:
+
+One notable feature is the `Damage` property, marked with the `ExposeOnSpawn` modifier, allowing it to be initialised directly during creation.
+
+**Function Details**
+- **`BeginPlay`**: Performs initial checks and binds the component to the end of the montage of the owning player:
+
 ```cpp
-// Called when the game starts
 void UDamageDealingSphereComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	ACharacter* OwnerCharacter = Cast<ACharacter>( GetOwner() );
-	if (!IsValid( OwnerCharacter ))
+	ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
+	if (!IsValid(OwnerCharacter))
 	{
-		ensureAlwaysMsgf( false, TEXT( "DamageDealingSphereComponent must be attached to a character" ) );
+		ensureAlwaysMsgf(false, TEXT("DamageDealingSphereComponent must be attached to a character"));
 		return;
 	}
 
 	USkeletalMeshComponent* OwnerMesh = OwnerCharacter->GetMesh();
-	if (!IsValid( OwnerMesh ))
+	if (!IsValid(OwnerMesh))
 	{
-		ensureAlwaysMsgf( false, TEXT( "Owner character must have a skeletal mesh component" ) );
+		ensureAlwaysMsgf(false, TEXT("Owner character must have a skeletal mesh component"));
 		return;
 	}
 
 	UAnimInstance* OwnerAnimInstance = OwnerMesh->GetAnimInstance();
 
-	if (!IsValid( OwnerAnimInstance ))
+	if (!IsValid(OwnerAnimInstance))
 	{
-		ensureAlwaysMsgf( false, TEXT( "Owner character must have an anim instance" ) );
+		ensureAlwaysMsgf(false, TEXT("Owner character must have an anim instance"));
 		return;
 	}
 
-
-	// Binding self-destruction to the end of the montage
-	OwnerAnimInstance->OnMontageEnded.AddDynamic( this, &UDamageDealingSphereComponent::OnOwnerMontageEnded );
-
-	// ...
+	OwnerAnimInstance->OnMontageEnded.AddDynamic(this, &UDamageDealingSphereComponent::OnOwnerMontageEnded);
 }
 ```
+*Figure 18. Begin Play function implementation*
 
-The OnOwnerMontageEnded function calls self-destruction:
+- **`OnOwnerMontageEnded`**: Handles self-destruction:
+
 ```cpp
 void UDamageDealingSphereComponent::OnOwnerMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
-	DestroyComponent(  );
+	DestroyComponent();
 }
 ```
-This allows the component to manage its lifetime by itself, without any additional managing from Combat Component. It also does not 
-require knowing about the exact player class, just generic character class, which
-- reduces coupling
-- allows it to be attached to any character child, so can be used on player and NPC even if I do not specify any common parent class for them
+*Figure 19. On Owner Montage Ended function implementation*
 
-Later it can be controlled via Anim Notifies 
+This approach allows the component to manage its lifecycle independently, reducing coupling and enabling attachment to any `ACharacter` child. It is compatible with both players and NPCs, even without a shared parent class. Later, its behaviour can be further refined via animation notifies.
 
-It also has overlapping manage to apply damage usign the Unreal's Standart Damage Dealing system:
+- **`OnBeginOverlap`**: Applies damage using Unreal's standard damage-dealing system:
+
 ```cpp
 void UDamageDealingSphereComponent::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
@@ -330,42 +336,34 @@ void UDamageDealingSphereComponent::OnBeginOverlap(UPrimitiveComponent* Overlapp
 		return;
 	}
 
-	if (!IsValid( OtherActor ))
+	if (!IsValid(OtherActor))
 	{
 		return;
 	}
 
 	FDamageEvent DamageEvent;
-	OtherActor->TakeDamage( Damage, DamageEvent, GetOwner()->GetInstigatorController(), GetOwner() );
+	OtherActor->TakeDamage(Damage, DamageEvent, GetOwner()->GetInstigatorController(), GetOwner());
 }
-
 ```
-
-### Testing 
-After all the inputs been setup, now the gameplay looks like this
-![](./Resources/Combat%20System/)
-
-Here’s a refactored version of the markdown document for improved clarity, depth, and structure:
+*Figure 20. On Owner Montage Ended function implementation*
 
 ## AI Behaviour
 
 ### Introduction to State Trees
 
-One of my objectives for this project was to become familiar
- with Unreal Engine's new State Trees tool. State
-  Trees can be applied to a wide range of cases
-   involving stateful data, including AI behaviours.  [(Your First 60 Minutes with StateTree | Tutorial, 2024)](https://dev.epicgames.com/community/learning/tutorials/lwnR/unreal-engine-your-first-60-minutes-with-statetree)
+One of my objectives for this project was to become familiar with Unreal Engine's new State Trees tool. State Trees can be applied to a wide range of cases involving stateful data, including AI behaviours. [(Your First 60 Minutes with StateTree | Tutorial, 2024)](https://dev.epicgames.com/community/learning/tutorials/lwnR/unreal-engine-your-first-60-minutes-with-statetree)
 
-Here’s a summary of the essential terminology from the documentation:
-- **Schema** - Sets up use-case specific data and can constrain or expand which nodes may be used within the State Tree.
-- **Context** - Data provided by the schema and available to any task or condition in the State Tree.
-- **Parameters** - Additional data defined by the user for use within the State Tree. Parameters can have custom values assigned when running the State Tree or linking it through a component like StateTreeComponent.
-- **Property Categories** - Metadata for task and condition properties to enable data binding. Key categories include:
-  - **Context** - Automatically binds to the best-matching context data but can be overridden.
-  - **Input** - A property required by a task/condition that must be bound for the State Tree to compile. Additional public properties can have optional bindings or specified values.
-  - **Output** - A property output from a task/condition, bindable as an input for other tasks or conditions. Cannot be bound to parameters.
-- **State** - Organizational layers within State Trees that can contain child states, tasks, entry conditions, and transitions.
-- **Transition** - Rules defining when a state should switch to another state in the tree.
+Here’s a concise summary of key State Tree terminology:
+
+- **Schema**: Defines use-case specific data, constraining or expanding node usage.
+- **Context**: Data from the schema, accessible to tasks and conditions.
+- **Parameters**: User-defined data with customisable values for State Trees.
+- **Property Categories**: Metadata for task/condition properties:
+  - **Context**: Automatically binds to matching schema data.
+  - **Input**: Required for task/condition functionality; must be bound for compilation.
+  - **Output**: Outputs from tasks/conditions, bindable as inputs for others.
+- **State**: Layers organising tasks, conditions, and transitions.
+- **Transition**: Defines when and how a state changes to another.
 
 These elements form the basis of the Combat State Tree for AI.
 
@@ -374,6 +372,7 @@ These elements form the basis of the Combat State Tree for AI.
 Before implementing the State Tree, I designed a conceptual scheme to outline the AI's intended behaviour.
 
 ![](./Resources/Combat%20System/AILogicScheme.jpg)
+*Figure 21. Combat AI Behaviour scheme*
 
 This diagram shows the general flow for AI decision-making within combat.
 
@@ -382,6 +381,7 @@ This diagram shows the general flow for AI decision-making within combat.
 Here is an overview of the Combat State Tree designed for AI:
 
 ![](./Resources/Combat%20System/State%20Tree.png)
+*Figure 22. Combat State Tree*
 
 Let’s go through each component in detail.
 
@@ -408,42 +408,57 @@ The **Root** state is the default state selected when the State Tree is activate
 The **Blocking** state contains several tasks:
 
 1. **ST_TaskBlock** (displayed as BP_Block in the State Tree) initiates blocking in the NPC’s Combat Component at the start of the state and ends blocking when the state is complete.
-   
+
    <iframe src="https://blueprintue.com/render/75h3q374/" width="100%" height="500" scrolling="no" allowfullscreen></iframe>
+
+   *Figure 23. Block State Tree Task*
 
    Events **Enter State** and **State Completed** are triggered by the State Tree as needed, allowing us to define relevant logic.
 
    To access the AI Controller, we need to mark its variable category as **Context**. Here’s an example of setting this context-based variable:
-   
+
    ![](./Resources/Combat%20System/StateTree/ContextBasedVariable.jpg)
+   
+   *Figure 24. Context-based variable setup*
 
    Now, this variable appears in the State Tree, initialized with the AI Controller context value:
 
    ![](./Resources/Combat%20System/StateTree/BlockContextInitilization.png)
 
+   *Figure 25. Example of context-based variable binding*
+
 2. **STTask_WaitRandomTimeInRange** pauses for a random duration and then exits the state, introducing a randomised blocking time. Here’s the task’s code:
 
    <iframe src="https://blueprintue.com/render/0w30td-v/" width="100%" height="500" scrolling="no" allowfullscreen></iframe>
+   
+   *Figure 26. Wait Random Time in Range State Tree Task*
 
    This task uses a **Waiting Time Range** parameter, which can be defined within the State Tree or derived from a parameter Data Asset. To make this variable instance-editable, we set its category to **Parameters** and check the **Instance Editable** box:
 
    ![](./Resources/Combat%20System/StateTree/ParameterVariable.jpg)
+   *Figure 27. Example of parameters-based variable setup*
 
    This setup allows us to initialize it with values from the parameter Data Asset or other State Tree parameters:
 
    ![](./Resources/Combat%20System/StateTree/ParametersInitialization.png)
 
+   *Figure 28. Example of parameters-based variable binding*
+
 3. **STTask_GetFirstActorOfClass** finds the first actor of a specified class, in this case, the player character. This task accepts an actor class parameter and outputs a reference to the found actor:
 
    <iframe src="https://blueprintue.com/render/v00ik7cy/" width="100%" height="500" scrolling="no" allowfullscreen></iframe>
 
+   *Figure 29. Get First Actor of class Task*
+
    To set this task’s output parameter, we categorize it as **Output** and check **Instance Editable**:
 
    ![](./Resources/Combat%20System/StateTree/OutputVariable.jpg)
+   *Figure 30. Example of output-based variable setup*
 
    This parameter is then available as input for subsequent tasks in this state:
 
    ![](./Resources/Combat%20System/StateTree/OutputParametersUsage.png)
+   *Figure 31. Example of output-based variable binding*
 
 4. **STTask_MoveToActor** is a custom task based on the Move To node. Unlike the default, this version restarts movement once the target is reached, enabling continuous tracking of the player. Using the default Move To Task was not feasible, as it exits the state upon completion.
 
@@ -453,7 +468,7 @@ The **Blocking** state has two possible transitions:
 
 #### Idle State
 
-The **Idle** state functions similarly to **Blocking** (excpet for the fact it does not have STTask_Block in it), with the following transition rules:
+The **Idle** state functions similarly to **Blocking** (except for the fact it does not have STTask_Block in it), with the following transition rules:
 - Transition to **Blocking** if the opponent is blocking.
 - Transition to **Attack** if the opponent is within attack range.
 - Transition to **Root** otherwise.
@@ -471,10 +486,356 @@ The **Stunned** state is similar to the Attack state. It plays the stunned anima
 
 This completes the current layout of the Combat State Tree. Here’s the resulting AI behaviour flow:
 
+![](Resources/Combat%20System/State%20Tree.png)
+*Figure 32. Combat State Tree*
+
+### Stealth State Tree Structure
+
+The stealth system works similarly to the fighting gameplay but has its own states:
+
+#### Idle
+In the Idle state, the NPC is either patrolling or standing still. Patrolling involves navigating through a range of points defined externally. Standing involves a delay task for two seconds.
+
+#### Suspicious
+The NPC enters the Suspicious state whenever they see the character. It has three different sub-states:
+- **Spotting Player**: The NPC observes the character using vision perception, increasing its awareness level every tick while looking at the player. When the awareness level reaches full, it transitions to the Chasing state. If it loses sight of the player, it transitions to the Looking Around sub-state.
+- **Going to Player**: Similar to Spotting Player but actively moves toward the player.
+- **Looking Around**: The NPC searches for the player. It first moves to the last seen location, then to a random location within a predefined radius. Awareness decreases every tick, and when it hits zero, the NPC returns to the Idle state.
+
+#### Chasing
+In this state, the NPC continuously follows the player.
+
+The overall state tree looks like this:
+
+![](./Resources/Stealth%20System/StealthStateTree.png)
+*Figure 33. Stealth State Tree*
+
+### Patrolling
+
+Given that I didn’t want to hardcode all the patrolling locations to the characters, I created a convenient tool called Patrol Pathpoints for game designers to set up patrol routes around the map.
+
+![](./Resources/Stealth%20System/Patrolling/PatrolTool.png)
+*Figure 34. Patrol Pathpoints Tool*
+
+
+
+Here's a refactored version of your dev journal entry, structured for better readability and flow:
+
+---
+
+### Patrol Pathpoint
+
+The `UPatrolPathpoint` class serves as the fundamental unit for creating patrol paths. A patrol path consists of a sequence of points in space, and NPCs move from one point to the next. The pathpoints visually represent these points.
+
+![](./Resources/Stealth%20System/Patrolling/Pathpoint.png)
+
+*Figure 35. Patrol pathpoint*
+
+#### Key Features:
+- **Billboard**: Provides a visual representation that allows the game designer to select and move the point.
+- **Pathpoint Index**: Represents the ordinal position of the pathpoint within the path.
+
+The class includes two functions for game designers, enabling on-the-fly modification of the path:
+- `AddPathpointForward()`: Adds a pathpoint between the current and the next one (or to the end if it's the last pathpoint).
+- `AddPathpointBackward()`: Adds a pathpoint between the current and the previous one (or to the start if it's the first pathpoint).
+
+In the editor, selecting a pathpoint shows these functions under the "Actions" section in the details view:
+
+![](./Resources/Stealth%20System/Patrolling/PatrolPathpointFunctions.png)
+
+*Figure 36. Patrol Pathpoint functions*
+
+#### Class Header
+```cpp
+UCLASS()
+class NOCOMMENTS_API APatrolPathpoint : public AActor
+{
+	GENERATED_BODY()
+	
+public:
+	APatrolPathpoint();
+	virtual void Tick(float DeltaTime) override;
+
+protected:
+	virtual void BeginPlay() override;
+
+private:
+	UPROPERTY(EditDefaultsOnly)
+	UBillboardComponent* Billboard;
+
+	UPROPERTY()
+	bool bWasDestroyed = false;
+
+	UPROPERTY()
+	int32 PathpointIndex = 0;
+
+public:
+	void SetPathpointIndex(int32 NewPathpointIndex);
+	int32 GetPathpointIndex() const { return PathpointIndex; }
+
+	FPatrolPathpointDelegate OnAddForwardPathpointRequested;
+	FPatrolPathpointDelegate OnAddBackPathpointRequested;
+
+protected:
+	UFUNCTION(BlueprintImplementableEvent, CallInEditor)
+	void UpdatePathpointIndexText(int32 NewIndex);
+
+	UFUNCTION(BlueprintCallable, CallInEditor, Category="Actions")
+	void AddPathpointForward();
+
+	UFUNCTION(BlueprintCallable, CallInEditor, Category="Actions")
+	void AddPathpointBackward();
+};
+```
+
+*Figure 37. APatrolPathpoint class header*
+
+Both `AddPathpoint` functions simply call the associated delegate:
+```cpp
+void APatrolPathpoint::AddPathpointForward()
+{
+	OnAddForwardPathpointRequested.Broadcast(PathpointIndex);
+}
+
+void APatrolPathpoint::AddPathpointBackward()
+{
+	OnAddBackPathpointRequested.Broadcast(PathpointIndex);
+}
+```
+
+*Figure 38. APatrolPathpoint functions implementation*
+
+---
+
+### Patrol Pathpoint Manager
+
+![](./Resources/Stealth%20System/Patrolling/PatrolManager.png)
+
+*Figure 39. Patrol Manager*
+
+The `APatrolPathpointManager` serves two primary purposes:
+1. It represents the first pathpoint of each patrol path.
+2. It holds references to all pathpoints in the path and draws the connections between them.
+
+One of the most interesting parts of this system was implementing the visual connection between the pathpoints. To do this, I had to enable `Tick()` calls in the editor before the simulation starts, which required overriding the `ShouldTickIfViewportsOnly()` function:
+```cpp
+virtual bool ShouldTickIfViewportsOnly() const override;
+```
+
+*Figure 40. Function to override to tick in editor*
+
+The implementation looks like this:
+```cpp
+bool APatrolPathpointManager::ShouldTickIfViewportsOnly() const
+{
+	if (IsValid(GetWorld()) && GetWorld()->WorldType == EWorldType::Editor)
+	{
+		return true;
+	}
+	return false;
+}
+```
+
+*Figure 41. `ShouldTickIfViewportsOnly()` implementation*
+
+Now that ticking is enabled, the following tasks occur in the `Tick()` function:
+- Draw lines between valid pathpoints.
+- Remove invalid pathpoints from the array.
+- Bind newly added pathpoint delegates to ensure `AddPathpointForward` and `AddPathpointBackward` work as expected.
+
+```cpp
+void APatrolPathpointManager::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	for (int32 PathpointIndex = 0; PathpointIndex < Pathpoints.Num(); ++PathpointIndex)
+	{
+		if (!IsValid(Pathpoints[PathpointIndex]))
+		{
+			OnPathpointDestroyed(PathpointIndex);
+			--PathpointIndex;
+			continue;
+		}
+
+		TryBindPathpointEvents(Pathpoints[PathpointIndex]);
+
+		FVector CurrentPathpointLocation = Pathpoints[PathpointIndex]->GetActorLocation();
+		FVector LastPathpointLocation = Pathpoints.IsValidIndex(PathpointIndex - 1) && IsValid(Pathpoints[PathpointIndex - 1])
+			? Pathpoints[PathpointIndex - 1]->GetActorLocation()
+			: GetActorLocation();
+		
+		DrawDebugDirectionalArrow(GetWorld(), LastPathpointLocation, CurrentPathpointLocation, 10.f, LinesColor, false, 0.f, 0, LinesThickness);
+	}
+
+	if (PathType == EPatrolPathType::Loop && !Pathpoints.IsEmpty())
+	{
+		FVector LastPathpointLocation = Pathpoints.Last()->GetActorLocation();
+		FVector PathStartLocation = GetActorLocation();
+		DrawDebugDirectionalArrow(GetWorld(), LastPathpointLocation, PathStartLocation, 10.f, LinesColor, false, 0.f, 0, LinesThickness);
+	}
+}
+```
+
+*Figure 42. Tick function*
+
+The `EPatrolPathType` enum defines whether the path should loop or move back and forth:
+
+```cpp
+UENUM(BlueprintType)
+enum class EPatrolPathType : uint8
+{
+	BackAndForth,
+	Loop
+};
+```
+
+*Figure 43. `EPatrolPathType` enum*
+
+Depending on the path type, the manager either draws an additional line from the last pathpoint to the start (for looped paths) or not.
+
+#### Additional Functions for Game Designers:
+- `AddPathpointToStart()`: Adds a pathpoint between the manager and the first pathpoint (or spawns the first pathpoint if there are none).
+- `AddPathpointToEnd()`: Adds a pathpoint after the last one (or spawns the first pathpoint if there are none).
+
+The manager also includes a function that returns the complete patrol path, which includes:
+- Locations of the pathpoints
+- The patrol path type
+
+This data is encapsulated in a custom structure:
+
+```cpp
+USTRUCT(BlueprintType)
+struct FPatrolPathData
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadWrite)
+	EPatrolPathType PathType = EPatrolPathType::BackAndForth;
+
+	UPROPERTY(BlueprintReadWrite)
+	TArray<FVector> PathpointLocations;
+};
+```
+
+*Figure 44. Patrol Path Data structure*
+
+#### Pathpoint Manager Header
+```cpp
+UCLASS()
+class NOCOMMENTS_API APatrolPathpointManager : public AActor
+{
+	GENERATED_BODY()
+
+protected:
+	virtual void BeginPlay() override;
+
+public:
+	APatrolPathpointManager();
+	virtual bool ShouldTickIfViewportsOnly() const override;
+	virtual void Tick(float DeltaTime) override;
+	virtual void Destroyed() override;
+	virtual void PostDuplicate(EDuplicateMode::Type DuplicateMode) override;
+	virtual void PostLoad() override;
+
+private:
+	UPROPERTY(EditDefaultsOnly, Category="Components")
+	UBillboardComponent* Billboard;
+
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<APatrolPathpoint> PathpointClass = APatrolPathpoint::StaticClass();
+
+	UPROPERTY()
+	TArray<APatrolPathpoint*> Pathpoints;
+
+	UPROPERTY(EditAnywhere, Category="Path Settings")
+	EPatrolPathType PathType = EPatrolPathType::BackAndForth;
+
+	UPROPERTY(EditAnywhere, Category="Lines Settings")
+	FColor LinesColor = FColor::Red;
+
+	UPROPERTY(EditAnywhere, Category="Lines Settings")
+	float LinesThickness = 2.f;
+
+public:
+	UFUNCTION(BlueprintPure)
+	FPatrolPathData GetPatrolPathData() const;
+
+protected:
+	UFUNCTION(BlueprintCallable, CallInEditor, Category = "Actions")
+	void AddPathpointToEnd();
+
+	UFUNCTION(Blueprintable, CallInEditor, Category="Actions")
+	void AddPathpointToStart();
+
+private:
+	void AddPathpoint(const FVector &NewPathpointLocation, const int32 NewPathpointIndex = INDEX_NONE);
+	void RecalculatePathpointsIndexesStartingFromIndex(int32 StartingIndex = 0);
+	void RecalculateAllPathpointsIndexes();
+
+	UFUNCTION(CallInEditor)
+	void OnAddForwardPathpointRequested(int32 PathpointIndex);
+
+	UFUNCTION(CallInEditor)
+	void OnAddBackPathpointRequested(int32 PathpointIndex);
+
+	UFUNCTION(CallInEditor)
+	void OnPathpointDestroyed(int32 PathpointIndex);
+
+	void TryBindPathpointEvents(APatrolPathpoint* Pathpoint);
+};
+```
+
+*Figure 45. Pathpoint Manager class header*
+
+---
+
+### Reflection
+
+#### What Went Well
+- **Markdown Practice**: This term marked the first time I used Markdown extensively for documentation, and it was incredibly convenient.
+- **Work Distribution**: The workload was well spread throughout the term, avoiding last-minute stress and extra work on the final day.
+- **State Trees Experience**: I gained substantial experience working with state trees. This was my first time spending so much time with a behavior editor, and it's the most complex AI I've worked on so far.
+- **Final Major Project Foundation**: I've laid the groundwork for the Final Major Project, and the next steps should be much smoother now.
+
+#### Areas for Improvement
+- **Testing in Machinations.io**: I didn't have the opportunity to test my behaviors in Machinations.io, but I plan to use it more frequently in the production phase.
+- **Prototype Quality**: The prototype is quite raw and couldn’t be playtested by others. Given the project's scale, my other responsibilities, and my lack of experience, I didn’t expect to deliver a fully playable version by the end of the term. However, this is something to consider for future projects.
+- **Pathpoint Plugin**: The patrolling pathpoints could have been developed as a plugin for easier reuse in other projects.
+- **Blueprint to C++ Conversion**: All the Blueprint code should eventually be migrated to C++ for better performance and scalability.
+- **State Tree Refinement**: With the new knowledge gained, I now know how to refine and improve the state trees for future use.
+
+#### Final Thoughts
+Overall, it's been a solid effort. There's plenty of room for improvement, but a lot has been accomplished.
+
+---
+# Bibliography
+- AI Perception in Unreal Engine | Unreal Engine 5.5 Documentation | Epic Developer Community | Epic Developer Community (s.d.) At: https://dev.epicgames.com/documentation/en-us/unreal-engine/ai-perception-in-unreal-engine (Accessed  05/11/2024).
+- Components in Unreal Engine | Unreal Engine 5.5 Documentation | Epic Developer Community (s.d.) At: https://dev.epicgames.com/documentation/en-us/unreal-engine/components-in-unreal-engine (Accessed  09/10/2024).
+- Data Assets in Unreal Engine | Unreal Engine 5.5 Documentation | Epic Developer Community (s.d.) At: https://dev.epicgames.com/documentation/en-us/unreal-engine/data-assets-in-unreal-engine (Accessed  09/10/2024).
+- Enhanced Input in Unreal Engine | Unreal Engine 5.5 Documentation | Epic Developer Community (s.d.) At: https://dev.epicgames.com/documentation/en-us/unreal-engine/enhanced-input-in-unreal-engine (Accessed  01/10/2024).
+- Grand Theft Auto V (2013) 
+- Grand Theft Auto V PS5 - Street Fights With Trevor [4K HDR 60fps] (2022) At: https://www.youtube.com/watch?v=P2lwi1qLLkM (Accessed  18/10/2024).
+- I went Ultra Instinct for a moment| Sifu PS5 (2022) At: https://www.youtube.com/watch?v=tGtr_qJDQXw (Accessed  18/10/2024).
+- Mafia 2 Remastered- Life In A Prison  (Mafia 2 Definitive Edition Prison Mission 1080p 60fps ) (2020) At: https://www.youtube.com/watch?v=ihEJRwTLGEc (Accessed  11/10/2024).
+- Mafia II (2010) 
+- Mafia II: Definitive Edition (2020) 
+- Retargeting Animations in 5.4 is Finally Easy!!! #unrealengine5 (2024) At: https://www.youtube.com/watch?v=iE474cUpR-o (Accessed  09/10/2024).
+- Sifu (2022) 
+- Unreal Engine Tips #8 | Visualize AI Perception using AI Debugging Tool (2020) At: https://www.youtube.com/watch?v=Xe-Y9zK79S8 (Accessed  05/11/2024).
+- Your First 60 Minutes with StateTree | Tutorial (2024) At: https://dev.epicgames.com/community/learning/tutorials/lwnR/unreal-engine-your-first-60-minutes-with-statetree (Accessed  02/10/2024).
 
 
 # Declared Assets
 
 [Animations](https://www.unrealengine.com/marketplace/en-US/product/fighting-animations)
+
+Assets created / added by Sam Lake:
+- Content/Migrate - all the files in this folder
+- Content/MS_Presets - all the files in this folder
+- Content/NoComments/Audio - all the files in this folder
+- L_TropicalCarWash
+
+AI Generated content:
+- DevelopmentJournal.md
 
 
