@@ -4,11 +4,12 @@ The project was recently moved to Unreal Engine 5.5.
 It SHOULD NOT be opened with Unreal Engine 5.4
 
 ## Video Demonstration
-<iframe width="560" height="315" src="https://www.youtube.com/embed/7AVJmlmcAbQ?si=MLs_qfbyEw9zEz13" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+[YouTube](https://www.youtube.com/watch?v=7AVJmlmcAbQ)
 
 ## Development Journal
-[Development Journal in Markdown](./Docs/Development%20Journal/Development%20Journal.md)
-[Development Journal in HRML](./Docs/Development%20Journal/Development%20Journal.html)
+- [Development Journal in Markdown](./Docs/Development%20Journal/Development%20Journal.md)
+
+- [Development Journal in HTML](./Docs/Development%20Journal/Development%20Journal.html)
 
 ## Build
 
