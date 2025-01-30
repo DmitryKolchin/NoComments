@@ -14,13 +14,35 @@ class NOCOMMENTS_API UCombatSettingsDataAsset : public UDataAsset
 {
 	GENERATED_BODY()
 
-public:
-	UPROPERTY( EditDefaultsOnly, BlueprintReadWrite, Category = "Attack" )
+private:
+	UPROPERTY( EditDefaultsOnly, BlueprintReadWrite, Category = "Attack", meta=(AllowPrivateAccess="true") )
 	float AttackSpeed = 2.f;
 
-	UPROPERTY( EditDefaultsOnly, BlueprintReadWrite, Category = "Block" )
-	float BlockWalkSpeed = 200.f;
+	/**
+	 * Walk speed in fight mode when blocking
+	 */
+	UPROPERTY( EditDefaultsOnly, BlueprintReadWrite, Category = "Walk Speed", meta=(AllowPrivateAccess="true"), DisplayName="Block Walk Speed" )
+	float FightModeWalkSpeed_Block = 200.f;
 
-	UPROPERTY( EditDefaultsOnly, BlueprintReadWrite, Category = "Idle" )
-	float IdleWalkSpeed = 300.f;
+	/**
+	 * Default walk speed in fight mode (when non-blocking)
+	 */
+	UPROPERTY( EditDefaultsOnly, BlueprintReadWrite, Category = "Walk Speed", meta=(AllowPrivateAccess="true"), DisplayName="Default Walk Speed" )
+	float FightModeWalkSpeed_Default = 300.f;
+
+public:
+	float GetAttackSpeed() const
+	{
+		return AttackSpeed;
+	}
+
+	float GetBlockWalkSpeed() const
+	{
+		return FightModeWalkSpeed_Block;
+	}
+
+	float GetIdleWalkSpeed() const
+	{
+		return FightModeWalkSpeed_Default;
+	}
 };
