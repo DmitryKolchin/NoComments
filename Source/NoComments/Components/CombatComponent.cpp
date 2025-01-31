@@ -3,6 +3,7 @@
 #include "CombatComponent.h"
 
 #include "DamageDealingSphereComponent.h"
+#include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "NoComments/DataAssets/CombatSettingsDataAsset.h"
@@ -43,8 +44,17 @@ void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 			}
 		}
 
-		//TODO: This thing is dangerous as hell because there are more than 1 skeletal mesh components in the owner actor
-		USkeletalMeshComponent* OwnerSkeletalMeshComponent = GetOwner()->FindComponentByClass<USkeletalMeshComponent>();
+		ACharacter* OwnerCharacter = Cast<ACharacter>( GetOwner() );
+
+		{
+			if ( !IsValid( OwnerCharacter ) )
+			{
+				UDebugFunctionLibrary::ThrowDebugError( GET_FUNCTION_NAME_STRING(), "OwnerCharacter is not valid" );
+				return;
+			}
+		}
+
+		USkeletalMeshComponent* OwnerSkeletalMeshComponent = OwnerCharacter->GetMesh();
 
 		{
 			if ( !IsValid( OwnerSkeletalMeshComponent ) )
@@ -161,8 +171,8 @@ void UCombatComponent::PlayAttackMontage(const FName& DamageDealingComponentSock
 	DamageDealingSphereComponent->RegisterComponent();
 	DamageDealingSphereComponent->SetRelativeLocation( FVector::ZeroVector );
 
-	//TODO: Remove the magic number
-	DamageDealingSphereComponent->SetSphereRadius( 10.f, true );
+	constexpr float DamageDealingSphereRadius = 10.f;
+	DamageDealingSphereComponent->SetSphereRadius( DamageDealingSphereRadius, true );
 }
 
 void UCombatComponent::SetOwnerWalkSpeed(float NewWalkSpeed)
