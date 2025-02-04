@@ -4,9 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "NoComments/DataStructures/Enums/CharacterCombatState.h"
 #include "CombatComponent.generated.h"
 
 class UCombatSettingsDataAsset;
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE( FCombatComponentDelegate );
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent), BlueprintType, Blueprintable )
 class NOCOMMENTS_API UCombatComponent : public UActorComponent
@@ -25,43 +28,49 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
+public:
+	UPROPERTY( BlueprintAssignable )
+	FCombatComponentDelegate OnAttackFinished;
+
 private:
 	UPROPERTY( EditDefaultsOnly, Category="Settings" )
 	TSoftObjectPtr<UCombatSettingsDataAsset> CombatSettings = nullptr;
+
+	UPROPERTY( EditDefaultsOnly, Category="Settings" )
+	float DamageDealingSphereComponentRadius = 50.0f;
 
 	UPROPERTY()
 	AActor* TargetEnemy = nullptr;
 
 	UPROPERTY()
-	bool bBlockActive = false;
+	ECharacterCombatState CharacterCombatState = ECharacterCombatState::Idle;
 
 public:
-
 #pragma region  FIGHT MODE
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION( BlueprintCallable )
 	void ActivateFightMode(AActor* NewTargetEnemy);
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION( BlueprintCallable )
 	void DeactivateFightMode();
 #pragma endregion
 
 #pragma region BLOCK
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION( BlueprintCallable )
 	void ActivateBlock();
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION( BlueprintCallable )
 	void DeactivateBlock();
-
-	UFUNCTION(BlueprintPure)
-	bool IsBlockActive() const;
 #pragma endregion
 
+	UFUNCTION( BlueprintPure )
+	ECharacterCombatState GetCharacterCombatState() const;
 
 protected:
 	// Generic function to play any attack montage
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION( BlueprintCallable )
 	void PlayAttackMontage(const FName& DamageDealingComponentSocketName, TSoftObjectPtr<UAnimMontage> MontageToPlay);
 
+private:
 #pragma region WALK SPEED
 
 	// Helper function for setting the owner's walk speed (with all the included checks)
@@ -76,5 +85,7 @@ protected:
 #pragma	endregion
 
 	UAnimInstance* GetOwnerAnimInstance() const;
-};
 
+	UFUNCTION()
+	void PerformPostAttackFinishedActions(UAnimMontage* FinishedAttackMontage, bool bInterrupted);
+};

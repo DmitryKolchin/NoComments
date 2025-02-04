@@ -6,6 +6,7 @@
 #include "Engine/DataAsset.h"
 #include "CombatAnimationsDataAsset.generated.h"
 
+struct FAttackAnimationInfo;
 /**
  * Base class for data assets that store combat related animations
  */
@@ -15,9 +16,12 @@ class NOCOMMENTS_API UCombatAnimationsDataAsset : public UDataAsset
 	GENERATED_BODY()
 
 public:
-	UPROPERTY( EditDefaultsOnly, BlueprintReadOnly, Category = "Jabs" )
-	TArray<TSoftObjectPtr<UAnimMontage>> RightJabMontages;
+	UPROPERTY( EditDefaultsOnly, BlueprintReadOnly )
+	TArray<FAttackAnimationInfo> LightAttacks;
 
-	UPROPERTY( EditDefaultsOnly, BlueprintReadOnly, Category = "Jabs" )
-	TArray<TSoftObjectPtr<UAnimMontage>> LeftJabMontages;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TArray<FAttackAnimationInfo> MidAttacks;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TArray<FAttackAnimationInfo> HeavyAttacks;
 };

@@ -74,12 +74,13 @@ void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 			}
 		}
 
-		// Soft lock is not supposed to work during any montage. otherwise the character will rotate to the target enemy
+		/* Soft lock is not supposed to work during any montage. otherwise the character will rotate to the target enemy
 		// in the middle of the attack animation
 		if ( OwnerAnimInstance->IsAnyMontagePlaying() )
 		{
 			return;
 		}
+		*/
 
 		FRotator NewOwnerRotation = GetOwner()->GetActorRotation();
 		NewOwnerRotation.Yaw = UKismetMathLibrary::FindLookAtRotation( GetOwner()->GetActorLocation(), TargetEnemy->GetActorLocation() ).Yaw;
@@ -112,19 +113,19 @@ void UCombatComponent::DeactivateFightMode()
 
 void UCombatComponent::ActivateBlock()
 {
-	bBlockActive = true;
+	CharacterCombatState = ECharacterCombatState::Blocking;
 	SetOwnerWalkSpeed_FightModeBlock();
 }
 
 void UCombatComponent::DeactivateBlock()
 {
-	bBlockActive = false;
+	CharacterCombatState = ECharacterCombatState::Idle;
 	SetOwnerWalkSpeed_FightModeDefault();
 }
 
-bool UCombatComponent::IsBlockActive() const
+ECharacterCombatState UCombatComponent::GetCharacterCombatState() const
 {
-	return bBlockActive;
+	return CharacterCombatState;
 }
 
 void UCombatComponent::PlayAttackMontage(const FName& DamageDealingComponentSocketName, TSoftObjectPtr<UAnimMontage> MontageToPlay)
@@ -154,13 +155,16 @@ void UCombatComponent::PlayAttackMontage(const FName& DamageDealingComponentSock
 	}
 
 	// If we are already playing a montage, we should not interrupt it
-	//TODO: Consider adding a queue for montages
 	if ( OwnerAnimInstance->IsAnyMontagePlaying() )
 	{
 		return;
 	}
 
+	OwnerAnimInstance->OnMontageEnded.AddDynamic( this, &UCombatComponent::PerformPostAttackFinishedActions );
+
 	OwnerAnimInstance->Montage_Play( MontageToPlay.LoadSynchronous(), CombatSettings.LoadSynchronous()->GetAttackSpeed() );
+
+	CharacterCombatState = ECharacterCombatState::Attacking;
 
 	UDamageDealingSphereComponent* DamageDealingSphereComponent = NewObject<UDamageDealingSphereComponent>( GetOwner() );
 
@@ -170,9 +174,7 @@ void UCombatComponent::PlayAttackMontage(const FName& DamageDealingComponentSock
 	DamageDealingSphereComponent->SetupAttachment( OwnerSkeletalMeshComponent, DamageDealingComponentSocketName );
 	DamageDealingSphereComponent->RegisterComponent();
 	DamageDealingSphereComponent->SetRelativeLocation( FVector::ZeroVector );
-
-	constexpr float DamageDealingSphereRadius = 10.f;
-	DamageDealingSphereComponent->SetSphereRadius( DamageDealingSphereRadius, true );
+	DamageDealingSphereComponent->SetSphereRadius( DamageDealingSphereComponentRadius, true );
 }
 
 void UCombatComponent::SetOwnerWalkSpeed(float NewWalkSpeed)
@@ -237,4 +239,23 @@ UAnimInstance* UCombatComponent::GetOwnerAnimInstance() const
 	}
 
 	return OwnerSkeletalMeshComponent->GetAnimInstance();
+}
+
+void UCombatComponent::PerformPostAttackFinishedActions(UAnimMontage* FinishedAttackMontage, bool bInterrupted)
+{
+	UAnimInstance* OwnerAnimInstance = GetOwnerAnimInstance();
+
+	{
+		if ( !IsValid( OwnerAnimInstance ) )
+		{
+			UDebugFunctionLibrary::ThrowDebugError( GET_FUNCTION_NAME_STRING(), "OwnerAnimInstance is not valid" );
+			return;
+		}
+	}
+
+	OwnerAnimInstance->OnMontageEnded.RemoveDynamic( this, &UCombatComponent::PerformPostAttackFinishedActions );
+
+	CharacterCombatState = ECharacterCombatState::Idle;
+
+	OnAttackFinished.Broadcast();
 }
