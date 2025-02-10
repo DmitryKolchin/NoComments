@@ -40,7 +40,7 @@ private:
 	float DamageDealingSphereComponentRadius = 50.0f;
 
 	UPROPERTY()
-	AActor* TargetEnemy = nullptr;
+	AActor* Opponent = nullptr;
 
 	UPROPERTY()
 	ECharacterCombatState CharacterCombatState = ECharacterCombatState::Idle;
@@ -48,7 +48,7 @@ private:
 public:
 #pragma region  FIGHT MODE
 	UFUNCTION( BlueprintCallable )
-	void ActivateFightMode(AActor* NewTargetEnemy);
+	void ActivateFightMode(AActor* NewOpponent);
 
 	UFUNCTION( BlueprintCallable )
 	void DeactivateFightMode();
@@ -64,6 +64,9 @@ public:
 
 	UFUNCTION( BlueprintPure )
 	ECharacterCombatState GetCharacterCombatState() const;
+
+	UFUNCTION(BlueprintPure)
+	AActor* GetTargetOpponent() const;
 
 protected:
 	// Generic function to play any attack montage

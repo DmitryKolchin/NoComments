@@ -38,7 +38,7 @@ public:
 #pragma region ATTACK SETTINGS
 
 	UPROPERTY( EditDefaultsOnly, BlueprintReadWrite, Category = "Attack", meta=(Units="Centimeters") )
-	float CombatRange = 100.0f;
+	FFloatRange CombatAreaZone = FFloatRange( 100.f, 200.f );
 
 	UPROPERTY( EditDefaultsOnly, BlueprintReadWrite, Category = "Attack" )
 	UCombatAnimationsDataAsset* CombatAnimations = nullptr;

@@ -34,7 +34,7 @@ void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 	Super::TickComponent( DeltaTime, TickType, ThisTickFunction );
 
 	// Soft lock logic
-	if ( IsValid( TargetEnemy ) )
+	if ( IsValid( Opponent ) )
 	{
 		{
 			if ( !IsValid( GetOwner() ) )
@@ -83,30 +83,30 @@ void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 		*/
 
 		FRotator NewOwnerRotation = GetOwner()->GetActorRotation();
-		NewOwnerRotation.Yaw = UKismetMathLibrary::FindLookAtRotation( GetOwner()->GetActorLocation(), TargetEnemy->GetActorLocation() ).Yaw;
+		NewOwnerRotation.Yaw = UKismetMathLibrary::FindLookAtRotation( GetOwner()->GetActorLocation(), Opponent->GetActorLocation() ).Yaw;
 
 		// TODO: Make rotation speed adjustable
 		GetOwner()->SetActorRotation( NewOwnerRotation );
 	}
 }
 
-void UCombatComponent::ActivateFightMode(AActor* NewTargetEnemy)
+void UCombatComponent::ActivateFightMode(AActor* NewOpponent)
 {
 	{
-		if ( !IsValid( NewTargetEnemy ) )
+		if ( !IsValid( NewOpponent ) )
 		{
 			UDebugFunctionLibrary::ThrowDebugError( GET_FUNCTION_NAME_STRING(), "NewTargetEnemy is not valid" );
 			return;
 		}
 	}
 
-	TargetEnemy = NewTargetEnemy;
+	Opponent = NewOpponent;
 	SetOwnerWalkSpeed_FightModeDefault();
 }
 
 void UCombatComponent::DeactivateFightMode()
 {
-	TargetEnemy = nullptr;
+	Opponent = nullptr;
 
 	// Let the walk speed change be the responsibility of the caller
 }
@@ -126,6 +126,11 @@ void UCombatComponent::DeactivateBlock()
 ECharacterCombatState UCombatComponent::GetCharacterCombatState() const
 {
 	return CharacterCombatState;
+}
+
+AActor* UCombatComponent::GetTargetOpponent() const
+{
+	return Opponent;
 }
 
 void UCombatComponent::PlayAttackMontage(const FName& DamageDealingComponentSocketName, TSoftObjectPtr<UAnimMontage> MontageToPlay)
