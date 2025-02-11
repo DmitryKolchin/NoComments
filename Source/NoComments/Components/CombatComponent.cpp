@@ -25,6 +25,15 @@ void UCombatComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
+	{
+		if (!IsValid( GetOwner() ))
+		{
+			UDebugFunctionLibrary::ThrowDebugError( GET_FUNCTION_NAME_STRING(), "No owner" );
+			return;
+		}
+	}
+
+	GetOwner()->OnTakeAnyDamage.AddDynamic( this, &UCombatComponent::TryIncreaseNumberOfAttackTakenBeforeBlock );
 	// ...
 }
 
@@ -114,6 +123,7 @@ void UCombatComponent::DeactivateFightMode()
 void UCombatComponent::ActivateBlock()
 {
 	CharacterCombatState = ECharacterCombatState::Blocking;
+	NumberOfAttackTakenBeforeBlock = 0;
 	SetOwnerWalkSpeed_FightModeBlock();
 }
 
@@ -131,6 +141,11 @@ ECharacterCombatState UCombatComponent::GetCharacterCombatState() const
 AActor* UCombatComponent::GetTargetOpponent() const
 {
 	return Opponent;
+}
+
+int32 UCombatComponent::GetNumberOfAttackTakenBeforeBlock() const
+{
+	return NumberOfAttackTakenBeforeBlock;
 }
 
 void UCombatComponent::PlayAttackMontage(const FName& DamageDealingComponentSocketName, TSoftObjectPtr<UAnimMontage> MontageToPlay)
@@ -179,7 +194,8 @@ void UCombatComponent::PlayAttackMontage(const FName& DamageDealingComponentSock
 	DamageDealingSphereComponent->SetupAttachment( OwnerSkeletalMeshComponent, DamageDealingComponentSocketName );
 	DamageDealingSphereComponent->RegisterComponent();
 	DamageDealingSphereComponent->SetRelativeLocation( FVector::ZeroVector );
-	DamageDealingSphereComponent->SetSphereRadius( DamageDealingSphereComponentRadius, true );
+	DamageDealingSphereComponent->SetSphereRadius( CombatSettings.LoadSynchronous()->GetDamageDealingSphereRadius(), true );
+	DamageDealingSphereComponent->SetHiddenInGame( !CombatSettings.LoadSynchronous()->ShouldShowDamageDealingSphere() );
 }
 
 void UCombatComponent::SetOwnerWalkSpeed(float NewWalkSpeed)
@@ -263,4 +279,14 @@ void UCombatComponent::PerformPostAttackFinishedActions(UAnimMontage* FinishedAt
 	CharacterCombatState = ECharacterCombatState::Idle;
 
 	OnAttackFinished.Broadcast();
+}
+
+void UCombatComponent::TryIncreaseNumberOfAttackTakenBeforeBlock(AActor* DamagedActor, float Damage, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser)
+{
+	if (GetCharacterCombatState() == ECharacterCombatState::Blocking)
+	{
+		return;
+	}
+
+	++NumberOfAttackTakenBeforeBlock;
 }

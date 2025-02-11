@@ -77,4 +77,5 @@ void UDamageDealingSphereComponent::OnBeginOverlap(UPrimitiveComponent* Overlapp
 
 	FDamageEvent DamageEvent;
 	OtherActor->TakeDamage( Damage, DamageEvent, GetOwner()->GetInstigatorController(), GetOwner() );
+	DestroyComponent(  );
 }

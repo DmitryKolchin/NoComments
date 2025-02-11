@@ -17,60 +17,85 @@ class NOCOMMENTS_API UCombatSettingsDataAsset_AI : public UCombatSettingsDataAss
 
 public:
 	/**
+	 * The distance range, in between which the AI is considered to be in combat area.
+	 * If the distance to character less than MIN, the AI is considered to be too close to the player.
+	 * If the distance to character is greater than MAX, the AI is considered to be too far from the player.
+	 */
+	UPROPERTY( EditDefaultsOnly, BlueprintReadWrite, Category = "Combat area" )
+	FFloatRange CombatAreaZone = FFloatRange( 100.f, 200.f );
+	/**
 	 * All the possible anim montages for the AI to use when taunting
 	 */
-	UPROPERTY( EditDefaultsOnly, BlueprintReadOnly, Category = "Taunts" )
+	UPROPERTY( EditDefaultsOnly, BlueprintReadOnly, Category = "Too Far From Player|Taunt" )
 	TArray<TSoftObjectPtr<UAnimMontage>> TauntMontages;
 
-	UPROPERTY( EditDefaultsOnly, BlueprintReadWrite, Category = "Preparation", meta=(Units="Seconds") )
-	float DecisionUpdateTime = 5.f;
-
 	/**
-	 * The chance that the AI will taunt the player
-	 */
-	UPROPERTY( EditDefaultsOnly, BlueprintReadOnly, Category="Preparation", meta=(ClampMax="1.0", ClampMin="0.0") )
+     * The chance that the AI will taunt the player
+     */
+	UPROPERTY( EditDefaultsOnly, BlueprintReadOnly, Category="Too Far From Player|Taunt", meta=(ClampMax="1.0", ClampMin="0.0") )
 	float ChanceToTaunt = 0.4f;
 
-	UPROPERTY(BlueprintReadWrite)
-	float ChanceToGoToPlayer = 0.6f;
-
+	/**
+	 * Time, while the AI will be simply moving to player before considering to taunt once more
+	 */
+	UPROPERTY( EditDefaultsOnly, BlueprintReadWrite, Category = "Too Far From Player|Idle" )
+	FFloatRange IdleDecisionMakingTimeRange_MovingToPlayer = FFloatRange( 3.f, 5.f );
 
 #pragma region ATTACK SETTINGS
 
-	UPROPERTY( EditDefaultsOnly, BlueprintReadWrite, Category = "Attack", meta=(Units="Centimeters") )
-	FFloatRange CombatAreaZone = FFloatRange( 100.f, 200.f );
+	/** Data Asset with all the attack animations
+	 */
+	UPROPERTY( EditDefaultsOnly, BlueprintReadWrite, Category = "In Combat Area|Attack" )
+	UCombatAnimationsDataAsset* AttackAnimations = nullptr;
 
-	UPROPERTY( EditDefaultsOnly, BlueprintReadWrite, Category = "Attack" )
-	UCombatAnimationsDataAsset* CombatAnimations = nullptr;
-
-	UPROPERTY( EditDefaultsOnly, BlueprintReadWrite, Category= "Attack|Odds", meta=(ClampMax="1.0", ClampMin="0.0") )
+	/** Chance the AI will deliver the light attack (if it already decided to attack)
+	 */
+	UPROPERTY( EditDefaultsOnly, BlueprintReadWrite, Category= "In Combat Area|Attack|Odds", meta=(ClampMax="1.0", ClampMin="0.0") )
 	float LightAttackChance = 0.6f;
 
-	UPROPERTY( EditDefaultsOnly, BlueprintReadWrite, Category = "Attack|Odds", meta=(ClampMax="1.0", ClampMin="0.0") )
+	/** Chance the AI will deliver the mid attack (if it already decided to attack)
+	 */
+	UPROPERTY( EditDefaultsOnly, BlueprintReadWrite, Category = "In Combat Area|Attack|Odds", meta=(ClampMax="1.0", ClampMin="0.0") )
 	float MidAttackChance = 0.3f;
 
-	UPROPERTY( EditDefaultsOnly, BlueprintReadWrite, Category = "Attack|Odds", meta=(ClampMax="1.0", ClampMin="0.0") )
+	/** Chance the AI will deliver the heavy attack (if it already decided to attack)
+	 */
+	UPROPERTY( EditDefaultsOnly, BlueprintReadWrite, Category = "In Combat Area|Attack|Odds", meta=(ClampMax="1.0", ClampMin="0.0") )
 	float HeavyAttackChance = 0.1f;
+
+	/** The chance the AI will go idle after the attack
+	 */
+	UPROPERTY( EditDefaultsOnly, BlueprintReadWrite, Category = "In Combat Area|Idle", meta = (ClampMax = "1.0", ClampMin = "0.0") )
+	float ChanceOfGoingIdleAfterAttack = 0.45f;
+
+	/** The time AI will be idle after the attack
+	 */
+	UPROPERTY( EditDefaultsOnly, BlueprintReadWrite, Category = "In Combat Area|Idle" )
+	FFloatRange IdleDecisionMakingTimeRange_AfterAttack = FFloatRange( 1.f, 3.f );
 
 #pragma endregion
 
+#pragma region BLOCK SETTINGS
 
+	/** The curve that describes the dependency of the block chance on the number of hits taken (number of hits taken is
+	 * cleared each time after the block is activated)
+	 */
+	UPROPERTY( EditDefaultsOnly, BlueprintReadWrite, Category="In Combat Area|Block" )
+	UCurveFloat* BlockChanceBasedOnTakenHits = nullptr;
 
-	UPROPERTY( EditDefaultsOnly, BlueprintReadWrite, Category = "Idle" )
-	FFloatRange EnemyIdleTimeRange = FFloatRange( 1.f, 3.f );
-
-	UPROPERTY( EditDefaultsOnly, BlueprintReadWrite, Category = "Block" )
+	/** The time AI will be blocking
+	 */
+	UPROPERTY( EditDefaultsOnly, BlueprintReadWrite, Category = "In Combat Area|Block" )
 	FFloatRange EnemyBlockTimeRange = FFloatRange( 0.5f, 1.5f );
 
-	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
+#pragma endregion
+
+	UPROPERTY( EditDefaultsOnly, BlueprintReadWrite, Category="In Combat Area|Movement" )
+	float ChanceToMoveWithinCombatArea = 0.5f;
+
+	UPROPERTY( EditDefaultsOnly, BlueprintReadWrite, Category="In Combat Area|Movement", meta=(Units="Degrees") )
+	float AngleUsedToCalculateNewPositionInCombatArea = 70.f;
+
+	UPROPERTY( EditDefaultsOnly, BlueprintReadWrite, Category="In Combat Area|Movement" )
+	FFloatRange IdleDecisionMakingTimeRange_WithinCombatArea = FFloatRange( 0.5f, 1.5f );
 };
-
-inline void UCombatSettingsDataAsset_AI::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
-{
-	Super::PostEditChangeProperty( PropertyChangedEvent );
-
-	if (PropertyChangedEvent.Property->GetName() == "ChanceToTaunt")
-	{
-		ChanceToGoToPlayer = 1.f - ChanceToTaunt;
-	}
-}

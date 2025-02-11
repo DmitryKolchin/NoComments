@@ -15,19 +15,25 @@ class NOCOMMENTS_API UCombatSettingsDataAsset : public UDataAsset
 	GENERATED_BODY()
 
 private:
-	UPROPERTY( EditDefaultsOnly, BlueprintReadWrite, Category = "Attack", meta=(AllowPrivateAccess="true") )
+	UPROPERTY( EditDefaultsOnly, Category = "Attack" )
 	float AttackSpeed = 2.f;
+
+	UPROPERTY( EditDefaultsOnly, Category = "Attack|Damage Dealing Sphere" )
+	bool DEBUG_ShowDamageDealingSphere = true;
+
+	UPROPERTY( EditDefaultsOnly, Category="Attack|Damage Dealing Sphere" )
+	float DamageDealingSphereRadius = 20.0f;
 
 	/**
 	 * Walk speed in fight mode when blocking
 	 */
-	UPROPERTY( EditDefaultsOnly, BlueprintReadWrite, Category = "Walk Speed", meta=(AllowPrivateAccess="true"), DisplayName="Block Walk Speed" )
+	UPROPERTY( EditDefaultsOnly, Category = "Walk Speed", DisplayName="Block Walk Speed" )
 	float FightModeWalkSpeed_Block = 200.f;
 
 	/**
 	 * Default walk speed in fight mode (when non-blocking)
 	 */
-	UPROPERTY( EditDefaultsOnly, BlueprintReadWrite, Category = "Walk Speed", meta=(AllowPrivateAccess="true"), DisplayName="Default Walk Speed" )
+	UPROPERTY( EditDefaultsOnly, Category = "Walk Speed", DisplayName="Default Walk Speed" )
 	float FightModeWalkSpeed_Default = 300.f;
 
 public:
@@ -44,5 +50,15 @@ public:
 	float GetIdleWalkSpeed() const
 	{
 		return FightModeWalkSpeed_Default;
+	}
+
+	float GetDamageDealingSphereRadius() const
+	{
+		return DamageDealingSphereRadius;
+	}
+
+	bool ShouldShowDamageDealingSphere() const
+	{
+		return DEBUG_ShowDamageDealingSphere;
 	}
 };

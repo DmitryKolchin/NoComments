@@ -36,14 +36,14 @@ private:
 	UPROPERTY( EditDefaultsOnly, Category="Settings" )
 	TSoftObjectPtr<UCombatSettingsDataAsset> CombatSettings = nullptr;
 
-	UPROPERTY( EditDefaultsOnly, Category="Settings" )
-	float DamageDealingSphereComponentRadius = 50.0f;
-
 	UPROPERTY()
 	AActor* Opponent = nullptr;
 
 	UPROPERTY()
 	ECharacterCombatState CharacterCombatState = ECharacterCombatState::Idle;
+
+	UPROPERTY()
+	int32 NumberOfAttackTakenBeforeBlock = 0;
 
 public:
 #pragma region  FIGHT MODE
@@ -68,6 +68,9 @@ public:
 	UFUNCTION(BlueprintPure)
 	AActor* GetTargetOpponent() const;
 
+	UFUNCTION(BlueprintPure)
+	int32 GetNumberOfAttackTakenBeforeBlock() const;
+
 protected:
 	// Generic function to play any attack montage
 	UFUNCTION( BlueprintCallable )
@@ -91,4 +94,7 @@ private:
 
 	UFUNCTION()
 	void PerformPostAttackFinishedActions(UAnimMontage* FinishedAttackMontage, bool bInterrupted);
+
+	UFUNCTION()
+	void TryIncreaseNumberOfAttackTakenBeforeBlock(AActor* DamagedActor, float Damage, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser);
 };
