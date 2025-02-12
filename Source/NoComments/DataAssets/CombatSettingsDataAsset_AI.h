@@ -63,15 +63,15 @@ public:
 	UPROPERTY( EditDefaultsOnly, BlueprintReadWrite, Category = "In Combat Area|Attack|Odds", meta=(ClampMax="1.0", ClampMin="0.0") )
 	float HeavyAttackChance = 0.1f;
 
-	/** The chance the AI will go idle after the attack
+	/** The chance the AI will go idle when not blocking
 	 */
 	UPROPERTY( EditDefaultsOnly, BlueprintReadWrite, Category = "In Combat Area|Idle", meta = (ClampMax = "1.0", ClampMin = "0.0") )
-	float ChanceOfGoingIdleAfterAttack = 0.45f;
+	float ChanceOfGoingIdleWhenNotBlocking = 0.45f;
 
-	/** The time AI will be idle after the attack
+	/** The time AI will be idle when not blocking
 	 */
 	UPROPERTY( EditDefaultsOnly, BlueprintReadWrite, Category = "In Combat Area|Idle" )
-	FFloatRange IdleDecisionMakingTimeRange_AfterAttack = FFloatRange( 1.f, 3.f );
+	FFloatRange IdleDecisionMakingTimeRange_NotBlocking = FFloatRange( 1.f, 3.f );
 
 #pragma endregion
 
