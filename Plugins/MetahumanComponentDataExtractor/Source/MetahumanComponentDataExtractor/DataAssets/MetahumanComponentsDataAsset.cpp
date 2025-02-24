@@ -35,7 +35,7 @@ UMetahumanComponentsDataAsset::UMetahumanComponentsDataAsset()
 	}
 }
 
-void UMetahumanComponentsDataAsset::ExtractDataFromMetahumanBlueprint(UBlueprint* MetahumanBlueprint)
+void UMetahumanComponentsDataAsset::ExtractDataFromMetahumanBlueprint(UObject* Object)
 {
 	const UMetahumanComponentDataExtractorSettings* MetahumanComponentDataExtractorSettings = GetDefault<UMetahumanComponentDataExtractorSettings>();
 	{
@@ -45,11 +45,19 @@ void UMetahumanComponentsDataAsset::ExtractDataFromMetahumanBlueprint(UBlueprint
 			return;
 		}
 	}
+	UBlueprint* NewMetahumanBlueprint = Cast<UBlueprint>( Object );
+	if ( !IsValid( NewMetahumanBlueprint ) )
+	{
+		ensureAlwaysMsgf( false, TEXT( "UMetahumanComponentsDataAsset::UMetahumanComponentsDataAsset: Object is not a blueprint." ) );
+		return;
+	}
+
+	SourceMetahumanBlueprint = NewMetahumanBlueprint;
 
 	TArray<FName> SkeletalMeshComponentPropertyNames = MetahumanComponentDataExtractorSettings->GetSkeletalMeshComponentPropertyNames();
 	TArray<FName> GroomComponentPropertyNames = MetahumanComponentDataExtractorSettings->GetGroomComponentPropertyNames();
 
-	TArray<UActorComponent*> ActorComponents = UBlueprintDataExtractionEFL::ExtractAllBlueprintCreatedComponents( MetahumanBlueprint );
+	TArray<UActorComponent*> ActorComponents = UBlueprintDataExtractionEFL::ExtractAllBlueprintCreatedComponents( SourceMetahumanBlueprint );
 
 	for ( auto ActorComponent : ActorComponents )
 	{
@@ -95,4 +103,9 @@ UGroomComponent* UMetahumanComponentsDataAsset::GetGroomComponentByName(FName Co
 	}
 
 	return nullptr;
+}
+
+UBlueprint* UMetahumanComponentsDataAsset::GetSourceMetahumanBlueprint() const
+{
+	return SourceMetahumanBlueprint;
 }

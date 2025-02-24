@@ -26,11 +26,16 @@ private:
 	UPROPERTY( EditDefaultsOnly, Instanced, Category="Groom Components" )
 	TMap<FName, UGroomComponent*> GroomComponents;
 
+	UPROPERTY()
+	UBlueprint* SourceMetahumanBlueprint = nullptr;
+
 public:
 	UFUNCTION( BlueprintCallable, CallInEditor )
-	void ExtractDataFromMetahumanBlueprint(UBlueprint* MetahumanBlueprint);
+	void ExtractDataFromMetahumanBlueprint(UObject* Object);
 
 	USkeletalMeshComponent* GetSkeletalMeshComponentByName(FName ComponentName) const;
 
 	UGroomComponent* GetGroomComponentByName(FName ComponentName) const;
+
+	UBlueprint* GetSourceMetahumanBlueprint() const;
 };
