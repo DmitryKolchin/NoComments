@@ -23,4 +23,6 @@ public:
 	                  FRenderTarget* Viewport,
 	                  FCanvas* Canvas,
 	                  bool bAdditionalViewFamily) override;
+
+	virtual bool CanVisualizeAsset(UObject* Object) override;
 };

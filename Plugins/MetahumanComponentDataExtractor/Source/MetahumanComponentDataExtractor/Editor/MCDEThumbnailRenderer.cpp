@@ -17,30 +17,44 @@ void UMCDEThumbnailRenderer::Draw(UObject* Object,
                                   bool bAdditionalViewFamily)
 {
 	UMetahumanComponentsDataAsset* MetahumanComponentsDataAsset = Cast<UMetahumanComponentsDataAsset>( Object );
+
 	if ( !IsValid( MetahumanComponentsDataAsset ) )
 	{
 		return;
 	}
 
-	if ( !IsValid( MetahumanComponentsDataAsset->GetSourceMetahumanBlueprint() ) )
+	UPackage* DataAssetPackage = MetahumanComponentsDataAsset->GetPackage();
+
+	if ( !IsValid( DataAssetPackage ) )
 	{
 		return;
 	}
+
+	FString DataAssetPackageFullName = DataAssetPackage->GetPathName();
+	FName DataAssetPackageFullNameAsFName = FName( *DataAssetPackageFullName );
 
 	UBlueprint* SourceMetahumanBlueprint = MetahumanComponentsDataAsset->GetSourceMetahumanBlueprint();
 
-	FString SourceMetahumanPackageName = SourceMetahumanBlueprint->GetOutermost()->GetName();
+	const FObjectThumbnail* ThumbnailCachedInDataAsset;
 
+	if (DataAssetPackage->HasThumbnailMap())
+	{
+		ThumbnailCachedInDataAsset = DataAssetPackage->GetThumbnailMap().Find( DataAssetPackageFullNameAsFName );
+	}
+	else
+	{
+		ThumbnailCachedInDataAsset = IsValid( SourceMetahumanBlueprint )
+		                             ? ThumbnailTools::GenerateThumbnailForObjectToSaveToDisk( MetahumanComponentsDataAsset->GetSourceMetahumanBlueprint() )
+		                             : nullptr;
+	}
 
-	const FObjectThumbnail* MetahumanBlueprintThumbnail = ThumbnailTools::GenerateThumbnailForObjectToSaveToDisk( SourceMetahumanBlueprint );//ThumbnailTools::FindCachedThumbnail( *SourceMetahumanPackageName );
-
-	if ( !MetahumanBlueprintThumbnail )
+	if ( !ThumbnailCachedInDataAsset )
 	{
 		return;
 	}
 
-	int32 ThumbnailImageWidth = MetahumanBlueprintThumbnail->GetImageWidth();
-	int32 ThumbnailImageHeight = MetahumanBlueprintThumbnail->GetImageHeight();
+	int32 ThumbnailImageWidth = ThumbnailCachedInDataAsset->GetImageWidth();
+	int32 ThumbnailImageHeight = ThumbnailCachedInDataAsset->GetImageHeight();
 
 	if ( ThumbnailImageWidth <= 0 || ThumbnailImageHeight <= 0 )
 	{
@@ -65,7 +79,7 @@ void UMCDEThumbnailRenderer::Draw(UObject* Object,
 		return;
 	}
 
-	FMemory::Memcpy( TextureData, MetahumanBlueprintThumbnail->AccessImageData().GetData(), MetahumanBlueprintThumbnail->AccessImageData().Num() );
+	FMemory::Memcpy( TextureData, ThumbnailCachedInDataAsset->AccessImageData().GetData(), ThumbnailCachedInDataAsset->AccessImageData().Num() );
 
 	ThumbnailTexture->GetPlatformData()->Mips[ 0 ].BulkData.Unlock();
 	ThumbnailTexture->UpdateResource();
@@ -73,4 +87,9 @@ void UMCDEThumbnailRenderer::Draw(UObject* Object,
 	FCanvasTileItem TileItem( FVector2D( X, Y ), ThumbnailTexture->GetResource(), FVector2D( Width, Height ), FLinearColor::White );
 	TileItem.BlendMode = SE_BLEND_Translucent;
 	Canvas->DrawItem( TileItem );
+}
+
+bool UMCDEThumbnailRenderer::CanVisualizeAsset(UObject* Object)
+{
+	return true;
 }
