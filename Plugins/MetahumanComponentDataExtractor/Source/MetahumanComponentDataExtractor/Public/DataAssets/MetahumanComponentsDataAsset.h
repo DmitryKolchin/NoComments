@@ -19,6 +19,8 @@ class METAHUMANCOMPONENTDATAEXTRACTOR_API UMetahumanComponentsDataAsset : public
 public:
 	UMetahumanComponentsDataAsset();
 
+	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
+
 private:
 	UPROPERTY( EditDefaultsOnly, Instanced, Category="Skeletal Mesh Components" )
 	TMap<FName, USkeletalMeshComponent*> SkeletalMeshComponents;
@@ -26,8 +28,11 @@ private:
 	UPROPERTY( EditDefaultsOnly, Instanced, Category="Groom Components" )
 	TMap<FName, UGroomComponent*> GroomComponents;
 
-	UPROPERTY()
-	UBlueprint* SourceMetahumanBlueprint = nullptr;
+	/** The source metahuman blueprint that this data asset is based on.
+	 *  Please, change via the Editor Utility Widget.
+	 */
+	UPROPERTY(VisibleDefaultsOnly, Category="Source Metahuman Blueprint")
+	TSoftObjectPtr<UBlueprint> SourceMetahumanBlueprint;
 
 public:
 	UFUNCTION( BlueprintCallable, CallInEditor )
@@ -37,9 +42,9 @@ public:
 
 	UGroomComponent* GetGroomComponentByName(FName ComponentName) const;
 
-	UBlueprint* GetSourceMetahumanBlueprint() const;
+	bool HasSourceMetahumanBlueprint() const;
 
-private:
-	void EmbedSourceMetahumanBlueprintThumbnail(UBlueprint* MetahumanBlueprint);
+	// Expects the source metahuman blueprint to be set
+	void UpdateEmbeddedThumbnail();
 
 };

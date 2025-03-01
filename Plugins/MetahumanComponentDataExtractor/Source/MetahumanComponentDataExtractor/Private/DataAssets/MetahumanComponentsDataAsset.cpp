@@ -10,11 +10,6 @@
 
 UMetahumanComponentsDataAsset::UMetahumanComponentsDataAsset()
 {
-	if (!HasAnyFlags( RF_ClassDefaultObject ))
-	{
-		return;
-	}
-
 	const UMetahumanComponentDataExtractorSettings* MetahumanComponentDataExtractorSettings = GetDefault<UMetahumanComponentDataExtractorSettings>();
 	{
 		if ( !IsValid( MetahumanComponentDataExtractorSettings ) )
@@ -26,6 +21,7 @@ UMetahumanComponentsDataAsset::UMetahumanComponentsDataAsset()
 
 	TArray<FName> SkeletalMeshComponentPropertyNames = MetahumanComponentDataExtractorSettings->GetSkeletalMeshComponentPropertyNames();
 
+	// It's easier to manipulate the data asset if the components are stored in separate maps
 	for ( auto SkeletalMeshComponentPropertyName : SkeletalMeshComponentPropertyNames )
 	{
 		USkeletalMeshComponent* NewSkeletalMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>( SkeletalMeshComponentPropertyName );
@@ -39,6 +35,16 @@ UMetahumanComponentsDataAsset::UMetahumanComponentsDataAsset()
 		UGroomComponent* NewGroomComponent = CreateDefaultSubobject<UGroomComponent>( GroomComponentPropertyName );
 
 		GroomComponents.Add( GroomComponentPropertyName, NewGroomComponent );
+	}
+}
+
+void UMetahumanComponentsDataAsset::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
+{
+	Super::PostEditChangeProperty( PropertyChangedEvent );
+
+	if ( PropertyChangedEvent.Property->GetName() == GET_MEMBER_NAME_CHECKED( UMetahumanComponentsDataAsset, SourceMetahumanBlueprint ) )
+	{
+		UpdateEmbeddedThumbnail();
 	}
 }
 
@@ -59,13 +65,13 @@ void UMetahumanComponentsDataAsset::ExtractDataFromMetahumanBlueprint(UObject* O
 		return;
 	}
 
-	EmbedSourceMetahumanBlueprintThumbnail( NewMetahumanBlueprint );
+	//Cache the source metahuman blueprint
 	SourceMetahumanBlueprint = NewMetahumanBlueprint;
 
 	TArray<FName> SkeletalMeshComponentPropertyNames = MetahumanComponentDataExtractorSettings->GetSkeletalMeshComponentPropertyNames();
 	TArray<FName> GroomComponentPropertyNames = MetahumanComponentDataExtractorSettings->GetGroomComponentPropertyNames();
 
-	TArray<UActorComponent*> ActorComponents = UBlueprintDataExtractionEFL::ExtractAllBlueprintCreatedComponents( SourceMetahumanBlueprint );
+	TArray<UActorComponent*> ActorComponents = UBlueprintDataExtractionEFL::ExtractAllBlueprintCreatedComponents( SourceMetahumanBlueprint.LoadSynchronous() );
 
 	for ( auto ActorComponent : ActorComponents )
 	{
@@ -113,23 +119,24 @@ UGroomComponent* UMetahumanComponentsDataAsset::GetGroomComponentByName(FName Co
 	return nullptr;
 }
 
-UBlueprint* UMetahumanComponentsDataAsset::GetSourceMetahumanBlueprint() const
+bool UMetahumanComponentsDataAsset::HasSourceMetahumanBlueprint() const
 {
-	return SourceMetahumanBlueprint;
+	return IsValid( SourceMetahumanBlueprint.LoadSynchronous() );
 }
 
-void UMetahumanComponentsDataAsset::EmbedSourceMetahumanBlueprintThumbnail(UBlueprint* MetahumanBlueprint)
+void UMetahumanComponentsDataAsset::UpdateEmbeddedThumbnail()
 {
+	// First of all - clearing the old cached thumbnail
+	ThumbnailTools::CacheEmptyThumbnail( GetFullName(), GetPackage() );
+
+	// This can be if the source metahuman blueprint is not set or cleared
+	if ( !HasSourceMetahumanBlueprint() )
 	{
-		if ( !IsValid( MetahumanBlueprint ) )
-		{
-			ensureAlwaysMsgf( false, TEXT( "UMetahumanComponentsDataAsset::EmbedSourceMetahumanBlueprintThumbnail: SourceMetahumanBlueprint is not valid." ) );
-			return;
-		}
+		return;
 	}
 
 	// First things first - getting the thumbnail from metahuman blueprint
-	FObjectThumbnail* SourceMetahumanBlueprintThumbnail = ThumbnailTools::GenerateThumbnailForObjectToSaveToDisk( MetahumanBlueprint );
+	FObjectThumbnail* SourceMetahumanBlueprintThumbnail = ThumbnailTools::GenerateThumbnailForObjectToSaveToDisk( SourceMetahumanBlueprint.LoadSynchronous() );
 
 	{
 		if ( !SourceMetahumanBlueprintThumbnail )
@@ -146,7 +153,6 @@ void UMetahumanComponentsDataAsset::EmbedSourceMetahumanBlueprintThumbnail(UBlue
 	FString DataAssetPackageFullName = DataAssetPackage->GetPathName();
 	FName DataAssetPackageFullNameAsFName = FName( *DataAssetPackageFullName );
 
-	ThumbnailTools::CacheEmptyThumbnail( GetFullName(), DataAssetPackage );
 	// if there is a thumbnail map, we can set the thumbnail we took from the metahuman blueprint as the thumbnail for the data asset
 	if ( DataAssetPackage->HasThumbnailMap() )
 	{
@@ -161,8 +167,6 @@ void UMetahumanComponentsDataAsset::EmbedSourceMetahumanBlueprintThumbnail(UBlue
 		DataAssetPackage->SetThumbnailMap( MakeUnique<FThumbnailMap>( DataAssetThumbnailMap ) );
 	}
 
-	// Signalling that the package is dirty and needs to be saved (by the god)
-	DataAssetPackage->MarkPackageDirty();
 
-	FAssetRegistryModule::AssetCreated( this ); // ✅ Forces UI refresh
+	FAssetRegistryModule::AssetCreated( this );
 }

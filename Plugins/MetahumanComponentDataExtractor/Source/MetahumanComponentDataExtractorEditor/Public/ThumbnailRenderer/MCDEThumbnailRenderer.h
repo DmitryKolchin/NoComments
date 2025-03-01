@@ -6,6 +6,7 @@
 #include "ThumbnailRendering/ThumbnailRenderer.h"
 #include "MCDEThumbnailRenderer.generated.h"
 
+class UMetahumanComponentsDataAsset;
 /**
  *
  */
@@ -25,4 +26,9 @@ public:
 	                  bool bAdditionalViewFamily) override;
 
 	virtual bool CanVisualizeAsset(UObject* Object) override;
+
+private:
+	const FObjectThumbnail* GetThumbnailForDataAsset(UMetahumanComponentsDataAsset* MetahumanComponentsDataAsset) const;
+
+	UTexture2D* GetThumbnailTextureFromObjectThumbnail(const FObjectThumbnail* ObjectThumbnail) const;
 };
