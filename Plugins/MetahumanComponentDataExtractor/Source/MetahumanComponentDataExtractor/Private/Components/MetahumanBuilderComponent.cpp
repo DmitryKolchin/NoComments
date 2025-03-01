@@ -1,11 +1,11 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "MetahumanBuilderComponent.h"
+#include "Components/MetahumanBuilderComponent.h"
 
 #include "GroomComponent.h"
-#include "MetahumanComponentDataExtractor/DataAssets/MetahumanComponentsDataAsset.h"
-#include "MetahumanComponentDataExtractor/Libraries/BlueprintDataExtractionEFL.h"
-#include "MetahumanComponentDataExtractor/Settings/MetahumanComponentDataExtractorSettings.h"
+#include "DataAssets/MetahumanComponentsDataAsset.h"
+#include "Libraries/BlueprintDataExtractionEFL.h"
+#include "Settings/MetahumanComponentDataExtractorSettings.h"
 
 DEFINE_LOG_CATEGORY_STATIC( LogMetahumanBuilderComponent, Log, All );
 

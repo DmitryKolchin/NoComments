@@ -1,16 +1,20 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "MetahumanComponentsDataAsset.h"
+#include "DataAssets/MetahumanComponentsDataAsset.h"
 
 #include "GroomComponent.h"
 #include "ObjectTools.h"
 #include "AssetRegistry/AssetRegistryModule.h"
-#include "MetahumanComponentDataExtractor/Libraries/BlueprintDataExtractionEFL.h"
-#include "MetahumanComponentDataExtractor/Settings/MetahumanComponentDataExtractorSettings.h"
-#include "UObject/SavePackage.h"
+#include "Libraries/BlueprintDataExtractionEFL.h"
+#include "Settings/MetahumanComponentDataExtractorSettings.h"
 
 UMetahumanComponentsDataAsset::UMetahumanComponentsDataAsset()
 {
+	if (!HasAnyFlags( RF_ClassDefaultObject ))
+	{
+		return;
+	}
+
 	const UMetahumanComponentDataExtractorSettings* MetahumanComponentDataExtractorSettings = GetDefault<UMetahumanComponentDataExtractorSettings>();
 	{
 		if ( !IsValid( MetahumanComponentDataExtractorSettings ) )
@@ -56,12 +60,12 @@ void UMetahumanComponentsDataAsset::ExtractDataFromMetahumanBlueprint(UObject* O
 	}
 
 	EmbedSourceMetahumanBlueprintThumbnail( NewMetahumanBlueprint );
-	SourceMetahumanBlueprint1 = NewMetahumanBlueprint;
+	SourceMetahumanBlueprint = NewMetahumanBlueprint;
 
 	TArray<FName> SkeletalMeshComponentPropertyNames = MetahumanComponentDataExtractorSettings->GetSkeletalMeshComponentPropertyNames();
 	TArray<FName> GroomComponentPropertyNames = MetahumanComponentDataExtractorSettings->GetGroomComponentPropertyNames();
 
-	TArray<UActorComponent*> ActorComponents = UBlueprintDataExtractionEFL::ExtractAllBlueprintCreatedComponents( SourceMetahumanBlueprint1 );
+	TArray<UActorComponent*> ActorComponents = UBlueprintDataExtractionEFL::ExtractAllBlueprintCreatedComponents( SourceMetahumanBlueprint );
 
 	for ( auto ActorComponent : ActorComponents )
 	{
@@ -111,13 +115,13 @@ UGroomComponent* UMetahumanComponentsDataAsset::GetGroomComponentByName(FName Co
 
 UBlueprint* UMetahumanComponentsDataAsset::GetSourceMetahumanBlueprint() const
 {
-	return SourceMetahumanBlueprint1;
+	return SourceMetahumanBlueprint;
 }
 
-void UMetahumanComponentsDataAsset::EmbedSourceMetahumanBlueprintThumbnail(UBlueprint* SourceMetahumanBlueprint)
+void UMetahumanComponentsDataAsset::EmbedSourceMetahumanBlueprintThumbnail(UBlueprint* MetahumanBlueprint)
 {
 	{
-		if ( !IsValid( SourceMetahumanBlueprint ) )
+		if ( !IsValid( MetahumanBlueprint ) )
 		{
 			ensureAlwaysMsgf( false, TEXT( "UMetahumanComponentsDataAsset::EmbedSourceMetahumanBlueprintThumbnail: SourceMetahumanBlueprint is not valid." ) );
 			return;
@@ -125,7 +129,7 @@ void UMetahumanComponentsDataAsset::EmbedSourceMetahumanBlueprintThumbnail(UBlue
 	}
 
 	// First things first - getting the thumbnail from metahuman blueprint
-	FObjectThumbnail* SourceMetahumanBlueprintThumbnail = ThumbnailTools::GenerateThumbnailForObjectToSaveToDisk( SourceMetahumanBlueprint );
+	FObjectThumbnail* SourceMetahumanBlueprintThumbnail = ThumbnailTools::GenerateThumbnailForObjectToSaveToDisk( MetahumanBlueprint );
 
 	{
 		if ( !SourceMetahumanBlueprintThumbnail )
@@ -157,9 +161,8 @@ void UMetahumanComponentsDataAsset::EmbedSourceMetahumanBlueprintThumbnail(UBlue
 		DataAssetPackage->SetThumbnailMap( MakeUnique<FThumbnailMap>( DataAssetThumbnailMap ) );
 	}
 
-
 	// Signalling that the package is dirty and needs to be saved (by the god)
 	DataAssetPackage->MarkPackageDirty();
 
-	FAssetRegistryModule::AssetCreated( this );// ✅ Forces UI refresh
+	FAssetRegistryModule::AssetCreated( this ); // ✅ Forces UI refresh
 }

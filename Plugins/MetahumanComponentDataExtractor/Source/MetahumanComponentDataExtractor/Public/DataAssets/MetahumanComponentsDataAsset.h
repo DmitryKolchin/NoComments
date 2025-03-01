@@ -27,7 +27,7 @@ private:
 	TMap<FName, UGroomComponent*> GroomComponents;
 
 	UPROPERTY()
-	UBlueprint* SourceMetahumanBlueprint1 = nullptr;
+	UBlueprint* SourceMetahumanBlueprint = nullptr;
 
 public:
 	UFUNCTION( BlueprintCallable, CallInEditor )
@@ -40,6 +40,6 @@ public:
 	UBlueprint* GetSourceMetahumanBlueprint() const;
 
 private:
-	void EmbedSourceMetahumanBlueprintThumbnail(UBlueprint* SourceMetahumanBlueprint);
+	void EmbedSourceMetahumanBlueprintThumbnail(UBlueprint* MetahumanBlueprint);
 
 };

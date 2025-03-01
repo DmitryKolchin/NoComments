@@ -10,7 +10,7 @@
  *
  */
 UCLASS()
-class METAHUMANCOMPONENTDATAEXTRACTOR_API UMCDEThumbnailRenderer : public UThumbnailRenderer
+class METAHUMANCOMPONENTDATAEXTRACTOREDITOR_API UMCDEThumbnailRenderer : public UThumbnailRenderer
 {
 	GENERATED_BODY()
 

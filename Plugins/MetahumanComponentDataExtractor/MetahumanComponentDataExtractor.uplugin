@@ -19,6 +19,11 @@
 			"Name": "MetahumanComponentDataExtractor",
 			"Type": "Runtime",
 			"LoadingPhase": "Default"
+		},
+		{
+			"Name": "MetahumanComponentDataExtractorEditor",
+			"Type": "Editor",
+			"LoadingPhase": "PostEngineInit"
 		}
 	]
 }

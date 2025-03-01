@@ -1,27 +1,27 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+﻿using UnrealBuildTool;
 
-using UnrealBuildTool;
-
-public class MetahumanComponentDataExtractor : ModuleRules
+public class MetahumanComponentDataExtractorEditor : ModuleRules
 {
-	public MetahumanComponentDataExtractor(ReadOnlyTargetRules Target) : base(Target)
+	public MetahumanComponentDataExtractorEditor(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
-		
+
 		PublicIncludePaths.AddRange(
-			new string[] {
+			new string[]
+			{
 				// ... add public include paths required here ...
 			}
-			);
-				
-		
+		);
+
+
 		PrivateIncludePaths.AddRange(
-			new string[] {
+			new string[]
+			{
 				// ... add other private include paths required here ...
 			}
-			);
-			
-		
+		);
+
+
 		PublicDependencyModuleNames.AddRange(
 			new string[]
 			{
@@ -29,12 +29,14 @@ public class MetahumanComponentDataExtractor : ModuleRules
 				"Blutility",
 				"HairStrandsCore",
 				"DeveloperSettings",
+				"UnrealEd",
 				"EditorFramework",
-				"UnrealEd"
+				"UMGEditor",
+				"UMG",
+				"ScriptableEditorWidgets"
 				// ... add other public dependencies that you statically link with here ...
 			}
 		);
-
 
 		PrivateDependencyModuleNames.AddRange(
 			new string[]
@@ -48,17 +50,9 @@ public class MetahumanComponentDataExtractor : ModuleRules
 				"Engine",
 				"Slate",
 				"SlateCore",
-
-				// ... add private dependencies that you statically link with here ...	
+				"MetahumanComponentDataExtractor",
+				// ... add private dependencies that you statically link with here ...
 			}
 		);
-		
-		
-		DynamicallyLoadedModuleNames.AddRange(
-			new string[]
-			{
-				// ... add any modules that your module loads dynamically here ...
-			}
-			);
 	}
 }

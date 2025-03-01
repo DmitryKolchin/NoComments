@@ -1,6 +1,6 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
-#include "MetahumanComponentDataExtractorSettings.h"
+#include "Settings/MetahumanComponentDataExtractorSettings.h"
 
 const TArray<FName>& UMetahumanComponentDataExtractorSettings::GetSkeletalMeshComponentPropertyNames() const
 {
@@ -20,4 +20,9 @@ FName UMetahumanComponentDataExtractorSettings::GetBodySkeletalMeshComponentProp
 FName UMetahumanComponentDataExtractorSettings::GetFaceSkeletalMeshComponentPropertyName() const
 {
 	return FaceSkeletalMeshComponentPropertyName;
+}
+
+TSoftObjectPtr<UEditorUtilityWidgetBlueprint> UMetahumanComponentDataExtractorSettings::GetMetahumanComponentDataExtractorWidget() const
+{
+	return MetahumanComponentDataExtractorWidget;
 }

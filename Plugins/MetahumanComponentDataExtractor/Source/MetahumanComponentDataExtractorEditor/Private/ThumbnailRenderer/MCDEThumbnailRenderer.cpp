@@ -1,11 +1,13 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
-#include "MCDEThumbnailRenderer.h"
+#include "ThumbnailRenderer/MCDEThumbnailRenderer.h"
 
 #include "CanvasItem.h"
 #include "CanvasTypes.h"
 #include "ObjectTools.h"
-#include "MetahumanComponentDataExtractor/DataAssets/MetahumanComponentsDataAsset.h"
+#include "DataAssets/MetahumanComponentsDataAsset.h"
+
+class UMetahumanComponentsDataAsset;
 
 void UMCDEThumbnailRenderer::Draw(UObject* Object,
                                   int32 X,
@@ -37,15 +39,17 @@ void UMCDEThumbnailRenderer::Draw(UObject* Object,
 
 	const FObjectThumbnail* ThumbnailCachedInDataAsset;
 
-	if (DataAssetPackage->HasThumbnailMap())
+	// Trying to get thumbnail from the data asset package
+	// Either from the thumbnail map or generate a new one from the source metahuman blueprint
+	if ( DataAssetPackage->HasThumbnailMap() )
 	{
 		ThumbnailCachedInDataAsset = DataAssetPackage->GetThumbnailMap().Find( DataAssetPackageFullNameAsFName );
 	}
 	else
 	{
 		ThumbnailCachedInDataAsset = IsValid( SourceMetahumanBlueprint )
-		                             ? ThumbnailTools::GenerateThumbnailForObjectToSaveToDisk( MetahumanComponentsDataAsset->GetSourceMetahumanBlueprint() )
-		                             : nullptr;
+			                             ? ThumbnailTools::GenerateThumbnailForObjectToSaveToDisk( MetahumanComponentsDataAsset->GetSourceMetahumanBlueprint() )
+			                             : nullptr;
 	}
 
 	if ( !ThumbnailCachedInDataAsset )
@@ -61,6 +65,7 @@ void UMCDEThumbnailRenderer::Draw(UObject* Object,
 		return;
 	}
 
+	// Now we can generate the thumbnail texture from the cached image data
 	UTexture2D* ThumbnailTexture = UTexture2D::CreateTransient( ThumbnailImageWidth, ThumbnailImageHeight, PF_B8G8R8A8 );
 
 	if ( !IsValid( ThumbnailTexture ) )

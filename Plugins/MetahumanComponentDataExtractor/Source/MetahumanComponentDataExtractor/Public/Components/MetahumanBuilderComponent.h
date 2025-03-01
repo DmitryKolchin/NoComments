@@ -9,14 +9,13 @@
 class UGroomComponent;
 class UMetahumanComponentsDataAsset;
 
-UENUM(BlueprintType)
+UENUM( BlueprintType )
 enum class EMetahumanComponentsCreationMode : uint8
 {
 	/* Spawns all new components */
 	SpawnAllComponentsNew,
 	/* Finds the first skeletal mesh component and uses it as body */
 	UseSingleExistingSkeletalMeshAsBody,
-
 };
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
@@ -24,7 +23,7 @@ class METAHUMANCOMPONENTDATAEXTRACTOR_API UMetahumanBuilderComponent : public UA
 {
 	GENERATED_BODY()
 
-public:	
+public:
 	// Sets default values for this component's properties
 	UMetahumanBuilderComponent();
 
@@ -32,18 +31,17 @@ protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
-public:	
+public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
 
 private:
-
-	UPROPERTY(EditInstanceOnly)
+	UPROPERTY( EditInstanceOnly )
 	TSoftObjectPtr<UMetahumanComponentsDataAsset> MetahumanComponentsDataAsset;
 
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY( EditDefaultsOnly )
 	EMetahumanComponentsCreationMode MetahumanComponentsCreationMode = EMetahumanComponentsCreationMode::SpawnAllComponentsNew;
 
 	UPROPERTY()

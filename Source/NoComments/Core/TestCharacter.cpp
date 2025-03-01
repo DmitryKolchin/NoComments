@@ -1,7 +1,8 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "TestCharacter.h"
-#include "MetahumanComponentDataExtractor/Components/MetahumanBuilderComponent.h"
+
+#include "Components/MetahumanBuilderComponent.h"
 // Sets default values
 ATestCharacter::ATestCharacter()
 {
@@ -31,6 +32,6 @@ void ATestCharacter::OnConstruction(const FTransform& Transform)
 {
 	Super::OnConstruction( Transform );
 
-	MetahumanBuilderComponent->AddComponentsToOwner( SkeletalMeshComponent );
+	//MetahumanBuilderComponent->AddComponentsToOwner( SkeletalMeshComponent );
 }
 
