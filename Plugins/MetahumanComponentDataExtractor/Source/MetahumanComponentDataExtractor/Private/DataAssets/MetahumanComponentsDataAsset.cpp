@@ -119,6 +119,20 @@ UGroomComponent* UMetahumanComponentsDataAsset::GetGroomComponentByName(FName Co
 	return nullptr;
 }
 
+USceneComponent* UMetahumanComponentsDataAsset::GetSceneComponentByName(FName ComponentName) const
+{
+	if ( SkeletalMeshComponents.Contains( ComponentName ) )
+	{
+		return SkeletalMeshComponents[ ComponentName ];
+	}
+	else if ( GroomComponents.Contains( ComponentName ) )
+	{
+		return GroomComponents[ ComponentName ];
+	}
+
+	return nullptr;
+}
+
 bool UMetahumanComponentsDataAsset::HasSourceMetahumanBlueprint() const
 {
 	return IsValid( SourceMetahumanBlueprint.LoadSynchronous() );

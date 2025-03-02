@@ -9,15 +9,6 @@
 class UGroomComponent;
 class UMetahumanComponentsDataAsset;
 
-UENUM( BlueprintType )
-enum class EMetahumanComponentsCreationMode : uint8
-{
-	/* Spawns all new components */
-	SpawnAllComponentsNew,
-	/* Finds the first skeletal mesh component and uses it as body */
-	UseSingleExistingSkeletalMeshAsBody,
-};
-
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class METAHUMANCOMPONENTDATAEXTRACTOR_API UMetahumanBuilderComponent : public UActorComponent
 {
@@ -41,32 +32,26 @@ private:
 	UPROPERTY( EditInstanceOnly )
 	TSoftObjectPtr<UMetahumanComponentsDataAsset> MetahumanComponentsDataAsset;
 
-	UPROPERTY( EditDefaultsOnly )
-	EMetahumanComponentsCreationMode MetahumanComponentsCreationMode = EMetahumanComponentsCreationMode::SpawnAllComponentsNew;
-
 	UPROPERTY()
-	TArray<UActorComponent*> SpawnedComponents;
+	TMap<FName, USceneComponent*> ManagedOwnerComponents;
 
-	UPROPERTY()
-	FName OwnerBodyComponentName = FName( "Body" );
-
-public:
-	UFUNCTION( BlueprintCallable )
-	void AddComponentsToOwner(USkeletalMeshComponent* Body);
+	UPROPERTY(EditDefaultsOnly)
+	FName BodySkeletalMeshOverrideName = NAME_None;
 
 private:
-	void AddNewSceneComponentToOwnerFromExistingSceneComponent(USceneComponent* ExistingComponent,
-	                                                           USceneComponent* ParentComponent,
-	                                                           FName ComponentPropertyName,
-	                                                           const TSubclassOf<USceneComponent>& ComponentClass);
+	void InitializeManagedOwnerComponents();
 
-	void SetupOwnerBodySkeletalMeshComponent(USkeletalMeshComponent* Body);
+	void InitializeOwnerBodyComponent();
 
-	void AddSkeletalMeshComponentsToOwnerBody(USkeletalMeshComponent* Body);
+	void InitializeManagedOwnerComponentsFromNamesAndClass(USceneComponent* ComponentToAttachTo, const TArray<FName>& ComponentNames, const TSubclassOf<USceneComponent>& ComponentClass);
 
-	void AddGrooomComponentsToOwnerFace(USkeletalMeshComponent* Face);
+	// Function that gets owner's body skeletal mesh component
+	USkeletalMeshComponent* GetOrCreateOwnerBodyComponent();
 
-	USkeletalMeshComponent* GetOwnerFaceSkeletalMeshComponent() const;
+	USceneComponent* AddSceneComponentToOwner(FName ComponentName, USceneComponent* ParentComponent, const TSubclassOf<USceneComponent>& ComponentClass);
 
-	void DestroySpawnedComponents();
+	void DestroyManagedOwnerComponents();
+
+
+
 };

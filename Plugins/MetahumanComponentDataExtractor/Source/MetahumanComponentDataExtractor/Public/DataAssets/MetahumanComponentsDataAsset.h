@@ -42,6 +42,8 @@ public:
 
 	UGroomComponent* GetGroomComponentByName(FName ComponentName) const;
 
+	USceneComponent* GetSceneComponentByName(FName ComponentName) const;
+
 	bool HasSourceMetahumanBlueprint() const;
 
 	// Expects the source metahuman blueprint to be set

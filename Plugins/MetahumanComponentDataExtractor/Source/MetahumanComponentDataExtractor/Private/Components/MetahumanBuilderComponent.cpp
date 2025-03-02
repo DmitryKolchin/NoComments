@@ -40,187 +40,259 @@ void UMetahumanBuilderComponent::PostEditChangeProperty(struct FPropertyChangedE
 {
 	Super::PostEditChangeProperty( PropertyChangedEvent );
 
-	if ( PropertyChangedEvent.Property->GetName() == FName( "MetahumanComponentsDataAsset" ).ToString() )
+	if ( PropertyChangedEvent.Property->GetName() == GET_MEMBER_NAME_CHECKED( UMetahumanBuilderComponent, MetahumanComponentsDataAsset ) )
 	{
-		DestroySpawnedComponents();
-
-		if ( !IsValid( GetOwner() ) )
-		{
-			return;
-		}
-
-		USkeletalMeshComponent* Body = nullptr;
-		for ( auto Component : GetOwner()->GetComponents() )
-		{
-			if ( Component->GetName().StartsWith( OwnerBodyComponentName.ToString() ) )
-			{
-				Body = Cast<USkeletalMeshComponent>( Component );
-				break;
-			}
-		}
-		AddComponentsToOwner( Body );
+		InitializeManagedOwnerComponents();
 	}
 }
 
-void UMetahumanBuilderComponent::AddComponentsToOwner(USkeletalMeshComponent* Body)
+void UMetahumanBuilderComponent::InitializeManagedOwnerComponents()
 {
+	// Clearing all the spawned stuff if the data asset is not valid (for example, if it was cleared)
+	if ( !IsValid( MetahumanComponentsDataAsset.LoadSynchronous() ) )
 	{
-		if ( !IsValid( Body ) )
-		{
-			UE_LOG( LogMetahumanBuilderComponent, Error, TEXT( "UMetahumanBuilderComponent::AddComponentsToOwner: Body is not valid." ) );
-			return;
-		}
-	}
-
-	{
-		if ( !MetahumanComponentsDataAsset.LoadSynchronous() )
-		{
-			UE_LOG( LogMetahumanBuilderComponent, Error, TEXT( "UMetahumanBuilderComponent::AddComponentsToOwner: MetahumanComponentsDataAsset is not valid." ) );
-			return;
-		}
-	}
-
-	const UMetahumanComponentDataExtractorSettings* MetahumanComponentDataExtractorSettings = GetDefault<UMetahumanComponentDataExtractorSettings>();
-
-	{
-		if ( !IsValid( MetahumanComponentDataExtractorSettings ) )
-		{
-			ensureAlwaysMsgf( false, TEXT( "UMetahumanComponentsDataAsset::UMetahumanComponentsDataAsset: MetahumanComponentDataExtractorSettings is not valid." ) );
-			return;
-		}
-	}
-
-	DestroySpawnedComponents();
-
-	SetupOwnerBodySkeletalMeshComponent( Body );
-
-	AddSkeletalMeshComponentsToOwnerBody( Body );
-
-	USkeletalMeshComponent* Face = GetOwnerFaceSkeletalMeshComponent();
-
-	if ( !IsValid( Face ) )
-	{
-		UE_LOG( LogMetahumanBuilderComponent, Error, TEXT( "UMetahumanBuilderComponent::AddComponentsToOwner: Face is not valid." ) );
+		DestroyManagedOwnerComponents();
 		return;
 	}
 
-	AddGrooomComponentsToOwnerFace( Face );
-}
-
-void UMetahumanBuilderComponent::AddNewSceneComponentToOwnerFromExistingSceneComponent(USceneComponent* ExistingComponent,
-                                                                                       USceneComponent* ParentComponent,
-                                                                                       FName ComponentPropertyName,
-                                                                                       const TSubclassOf<USceneComponent>& ComponentClass)
-{
-	USceneComponent* NewSceneComponent = NewObject<USceneComponent>( GetOwner(), ComponentClass, ComponentPropertyName );
-	UBlueprintDataExtractionEFL::CopyAllPropertiesFromOneObjectToAnother( ExistingComponent, NewSceneComponent );
-	NewSceneComponent->AttachToComponent( ParentComponent, FAttachmentTransformRules::KeepRelativeTransform );
-	NewSceneComponent->RegisterComponent();
-	GetOwner()->AddInstanceComponent( NewSceneComponent );
-
-	SpawnedComponents.Add( NewSceneComponent );
-}
-
-void UMetahumanBuilderComponent::SetupOwnerBodySkeletalMeshComponent(USkeletalMeshComponent* Body)
-{
 	const UMetahumanComponentDataExtractorSettings* MetahumanComponentDataExtractorSettings = GetDefault<UMetahumanComponentDataExtractorSettings>();
 
 	{
 		if ( !IsValid( MetahumanComponentDataExtractorSettings ) )
 		{
-			ensureAlwaysMsgf( false, TEXT( "UMetahumanComponentsDataAsset::UMetahumanComponentsDataAsset: MetahumanComponentDataExtractorSettings is not valid." ) );
+			ensureAlwaysMsgf( false, TEXT( "UMetahumanBuilderComponent: MetahumanComponentDataExtractorSettings is not valid." ) );
 			return;
 		}
 	}
 
-	const FName DefaultBodyComponentName = MetahumanComponentDataExtractorSettings->GetBodySkeletalMeshComponentPropertyName();
-	OwnerBodyComponentName = Body->GetFName();
-
-	FTransform BodyTransform = Body->GetComponentTransform();
-	UBlueprintDataExtractionEFL::CopyAllPropertiesFromOneObjectToAnother( MetahumanComponentsDataAsset.LoadSynchronous()->GetSkeletalMeshComponentByName( DefaultBodyComponentName ), Body );
-
-
-	Body->UnregisterComponent();
-	Body->RegisterComponent();
-	Body->SetRelativeTransform( BodyTransform );
-}
-
-void UMetahumanBuilderComponent::AddSkeletalMeshComponentsToOwnerBody(USkeletalMeshComponent* Body)
-{
-	const UMetahumanComponentDataExtractorSettings* MetahumanComponentDataExtractorSettings = GetDefault<UMetahumanComponentDataExtractorSettings>();
+	// First things first - we need to get the owner body component
+	InitializeOwnerBodyComponent();
+	USceneComponent* BodyComponent = ManagedOwnerComponents.FindRef( MetahumanComponentDataExtractorSettings->GetBodySkeletalMeshComponentPropertyName() );
 
 	{
-		if ( !IsValid( MetahumanComponentDataExtractorSettings ) )
+		if ( !IsValid( BodyComponent ) )
 		{
-			ensureAlwaysMsgf( false, TEXT( "UMetahumanComponentsDataAsset::UMetahumanComponentsDataAsset: MetahumanComponentDataExtractorSettings is not valid." ) );
+			ensureAlwaysMsgf( false, TEXT( "UMetahumanBuilderComponent::InitializeManagedOwnerComponents: BodyComponent is not valid." ) );
 			return;
 		}
 	}
 
-	const FName DefaultBodyComponentName = MetahumanComponentDataExtractorSettings->GetBodySkeletalMeshComponentPropertyName();
+	//Let's add all the rest of skeletal mesh components to the owner
 	TArray<FName> SkeletalMeshComponentPropertyNames = MetahumanComponentDataExtractorSettings->GetSkeletalMeshComponentPropertyNames();
-	SkeletalMeshComponentPropertyNames.Remove( DefaultBodyComponentName );
+	InitializeManagedOwnerComponentsFromNamesAndClass( BodyComponent, SkeletalMeshComponentPropertyNames, USkeletalMeshComponent::StaticClass() );
 
-	for ( auto SkeletalMeshComponentPropertyName : SkeletalMeshComponentPropertyNames )
+	//Let's add all the rest of groom  components to the owner
+	USceneComponent* FaceComponent = ManagedOwnerComponents.FindRef( MetahumanComponentDataExtractorSettings->GetFaceSkeletalMeshComponentPropertyName() );
+
+	if ( !IsValid( FaceComponent ) )
 	{
-		USkeletalMeshComponent* SkeletalMeshComponentFromDataAsset = MetahumanComponentsDataAsset.LoadSynchronous()->GetSkeletalMeshComponentByName( SkeletalMeshComponentPropertyName );
-		AddNewSceneComponentToOwnerFromExistingSceneComponent( SkeletalMeshComponentFromDataAsset, Body, SkeletalMeshComponentPropertyName, USkeletalMeshComponent::StaticClass() );
-	}
-}
-
-void UMetahumanBuilderComponent::AddGrooomComponentsToOwnerFace(USkeletalMeshComponent* Face)
-{
-	const UMetahumanComponentDataExtractorSettings* MetahumanComponentDataExtractorSettings = GetDefault<UMetahumanComponentDataExtractorSettings>();
-
-	{
-		if ( !IsValid( MetahumanComponentDataExtractorSettings ) )
-		{
-			ensureAlwaysMsgf( false, TEXT( "UMetahumanComponentsDataAsset::UMetahumanComponentsDataAsset: MetahumanComponentDataExtractorSettings is not valid." ) );
-			return;
-		}
+		ensureAlwaysMsgf( false, TEXT( "UMetahumanBuilderComponent::InitializeManagedOwnerComponents: Face component is not valid." ) );
+		return;
 	}
 
 	TArray<FName> GroomComponentPropertyNames = MetahumanComponentDataExtractorSettings->GetGroomComponentPropertyNames();
-
-	for ( auto GroomComponentPropertyName : GroomComponentPropertyNames )
-	{
-		UGroomComponent* GroomComponentFromDataAsset = MetahumanComponentsDataAsset.LoadSynchronous()->GetGroomComponentByName( GroomComponentPropertyName );
-		AddNewSceneComponentToOwnerFromExistingSceneComponent( GroomComponentFromDataAsset, Face, GroomComponentPropertyName, UGroomComponent::StaticClass() );
-	}
+	InitializeManagedOwnerComponentsFromNamesAndClass( FaceComponent, GroomComponentPropertyNames, UGroomComponent::StaticClass() );
 }
 
-USkeletalMeshComponent* UMetahumanBuilderComponent::GetOwnerFaceSkeletalMeshComponent() const
+void UMetahumanBuilderComponent::InitializeOwnerBodyComponent()
 {
+	{
+		if ( !IsValid( GetOwner() ) )
+		{
+			ensureAlwaysMsgf( false, TEXT( "UMetahumanBuilderComponent::InitializeOwnerBodyComponent: Owner is not valid." ) );
+			return;
+		}
+		if ( !IsValid( MetahumanComponentsDataAsset.LoadSynchronous() ) )
+		{
+			ensureAlwaysMsgf( false, TEXT( "UMetahumanBuilderComponent::InitializeOwnerBodyComponent: MetahumanComponentsDataAsset is not valid." ) );
+			return;
+		}
+	}
+
+	USceneComponent* OwnerBodyComponent = GetOrCreateOwnerBodyComponent();
+
+
+	{
+		if ( !IsValid( OwnerBodyComponent ) )
+		{
+			ensureAlwaysMsgf( false, TEXT( "UMetahumanBuilderComponent::InitializeOwnerBodyComponent: OwnerBodyComponent is not valid." ) );
+			return;
+		}
+	}
+
 	const UMetahumanComponentDataExtractorSettings* MetahumanComponentDataExtractorSettings = GetDefault<UMetahumanComponentDataExtractorSettings>();
 
 	{
 		if ( !IsValid( MetahumanComponentDataExtractorSettings ) )
 		{
-			ensureAlwaysMsgf( false, TEXT( "UMetahumanComponentsDataAsset::UMetahumanComponentsDataAsset: MetahumanComponentDataExtractorSettings is not valid." ) );
+			ensureAlwaysMsgf( false, TEXT( "UMetahumanBuilderComponent: MetahumanComponentDataExtractorSettings is not valid." ) );
+			return;
+		}
+	}
+
+	//Adding the body component to the map if it wasn't there
+	if (!ManagedOwnerComponents.Contains( MetahumanComponentDataExtractorSettings->GetBodySkeletalMeshComponentPropertyName() ))
+	{
+		ManagedOwnerComponents.Add( MetahumanComponentDataExtractorSettings->GetBodySkeletalMeshComponentPropertyName(), OwnerBodyComponent );
+	}
+
+	FTransform BodyComponentTransform = OwnerBodyComponent->GetRelativeTransform();
+
+	const FName BodySkeletalMeshComponentPropertyName = MetahumanComponentDataExtractorSettings->GetBodySkeletalMeshComponentPropertyName();
+	UBlueprintDataExtractionEFL::CopyAllPropertiesFromOneObjectToAnother( MetahumanComponentsDataAsset.LoadSynchronous()->GetSkeletalMeshComponentByName( BodySkeletalMeshComponentPropertyName ), OwnerBodyComponent );
+
+	OwnerBodyComponent->UnregisterComponent();
+	OwnerBodyComponent->RegisterComponent();
+	OwnerBodyComponent->SetRelativeTransform( BodyComponentTransform );
+}
+
+void UMetahumanBuilderComponent::InitializeManagedOwnerComponentsFromNamesAndClass(USceneComponent* ComponentToAttachTo, const TArray<FName>& ComponentNames, const TSubclassOf<USceneComponent>& ComponentClass)
+{
+	{
+		if ( !IsValid( MetahumanComponentsDataAsset.LoadSynchronous() ) )
+		{
+			ensureAlwaysMsgf( false, TEXT( "UMetahumanBuilderComponent::InitializeManagedOwnerComponentsFromNamesAndClass: MetahumanComponentsDataAsset is not valid." ) );
+			return;
+		}
+		if ( !IsValid( ComponentToAttachTo ) )
+		{
+			ensureAlwaysMsgf( false, TEXT( "UMetahumanBuilderComponent::InitializeManagedOwnerComponentsFromNamesAndClass: ComponentToAttachTo is not valid." ) );
+			return;
+		}
+	}
+
+	for ( auto ComponentName : ComponentNames )
+	{
+		USceneComponent* ComponentToTakePropertiesFrom = MetahumanComponentsDataAsset.LoadSynchronous()->GetSceneComponentByName( ComponentName );
+
+		{
+			if ( !IsValid( ComponentToTakePropertiesFrom ) )
+			{
+				ensureAlwaysMsgf( false, TEXT( "UMetahumanBuilderComponent::InitializeManagedOwnerComponentsFromNamesAndClass: ComponentToTakePropertiesFrom is not valid." ) );
+				return;
+			}
+		}
+
+		USceneComponent* CurrentProcessedComponent = ManagedOwnerComponents.Contains( ComponentName )
+			                                             ? ManagedOwnerComponents.FindRef( ComponentName )
+			                                             : AddSceneComponentToOwner( ComponentName, ComponentToAttachTo, ComponentClass );
+
+		{
+			if ( !IsValid( CurrentProcessedComponent ) )
+			{
+				ensureAlwaysMsgf( false, TEXT( "UMetahumanBuilderComponent::InitializeManagedOwnerComponentsFromNamesAndClass: CurrentProcessedComponent is not valid." ) );
+				return;
+			}
+		}
+
+		UBlueprintDataExtractionEFL::CopyAllPropertiesFromOneObjectToAnother( ComponentToTakePropertiesFrom, CurrentProcessedComponent );
+		CurrentProcessedComponent->UnregisterComponent();
+		CurrentProcessedComponent->RegisterComponent();
+
+		//Adding new component to map if it wasn't there
+		if ( !ManagedOwnerComponents.Contains( ComponentName ) )
+		{
+			ManagedOwnerComponents.Add( ComponentName, CurrentProcessedComponent );
+		}
+	}
+}
+
+USkeletalMeshComponent* UMetahumanBuilderComponent::GetOrCreateOwnerBodyComponent()
+{
+	{
+		if ( !IsValid( GetOwner() ) )
+		{
+			ensureAlwaysMsgf( false, TEXT( "UMetahumanBuilderComponent::GetOwnerBodyComponent: Owner is not valid." ) );
 			return nullptr;
 		}
 	}
 
-	for ( auto Component : GetOwner()->GetComponents() )
+	const UMetahumanComponentDataExtractorSettings* MetahumanComponentDataExtractorSettings = GetDefault<UMetahumanComponentDataExtractorSettings>();
+
 	{
-		if ( Component->GetName().StartsWith( "Face" ) )
+		if ( !IsValid( MetahumanComponentDataExtractorSettings ) )
 		{
-			return Cast<USkeletalMeshComponent>( Component );
+			ensureAlwaysMsgf( false, TEXT( "UMetahumanBuilderComponent: MetahumanComponentDataExtractorSettings is not valid." ) );
+			return nullptr;
 		}
 	}
 
-	return nullptr;
+	FName BodySkeletalMeshComponentPropertyName = MetahumanComponentDataExtractorSettings->GetBodySkeletalMeshComponentPropertyName();
+
+	if ( ManagedOwnerComponents.Contains( BodySkeletalMeshComponentPropertyName ) )
+	{
+		return Cast<USkeletalMeshComponent>( ManagedOwnerComponents[ MetahumanComponentDataExtractorSettings->GetBodySkeletalMeshComponentPropertyName() ] );
+	}
+
+	TSet<UActorComponent*> OwnerComponents = GetOwner()->GetComponents();
+
+	// By default, the skeletal mesh which parent is not a skeletal mesh is the body
+	// If the body name override is provided, we use it
+	for ( auto OwnerComponent : OwnerComponents )
+	{
+		USkeletalMeshComponent* OwnerSkeletalMeshComponent = Cast<USkeletalMeshComponent>( OwnerComponent );
+
+		// We are not interested in non-skeletal mesh components
+		if ( !IsValid( OwnerSkeletalMeshComponent ) )
+		{
+			continue;
+		}
+
+		// Check if the body name override is provided
+		if ( !BodySkeletalMeshOverrideName.IsEqual( NAME_None ) )
+		{
+			if ( OwnerSkeletalMeshComponent->GetFName().IsEqual( BodySkeletalMeshOverrideName ) )
+			{
+				return OwnerSkeletalMeshComponent;
+			}
+
+			continue;
+		}
+
+		// Otherwise we use the first skeletal mesh component which parent is not a skeletal mesh
+		USkeletalMeshComponent* ParentSkeletalMeshComponent = Cast<USkeletalMeshComponent>( OwnerSkeletalMeshComponent->GetAttachParent() );
+		if ( !IsValid( ParentSkeletalMeshComponent ) )
+		{
+			return OwnerSkeletalMeshComponent;
+		}
+	}
+
+	//if we didn't find the body component, we shall create one
+	return Cast<USkeletalMeshComponent>( AddSceneComponentToOwner( BodySkeletalMeshComponentPropertyName,
+	                                                               GetOwner()->GetRootComponent(),
+	                                                               USkeletalMeshComponent::StaticClass() ) );
 }
 
-void UMetahumanBuilderComponent::DestroySpawnedComponents()
+USceneComponent* UMetahumanBuilderComponent::AddSceneComponentToOwner(FName ComponentName, USceneComponent* ParentComponent, const TSubclassOf<USceneComponent>& ComponentClass)
 {
-	for ( auto SpawnedComponent : SpawnedComponents )
+	if ( !IsValid( GetOwner() ) )
 	{
-		if ( IsValid( SpawnedComponent ) )
-		{
-			SpawnedComponent->DestroyComponent();
-		}
+		ensureAlwaysMsgf( false, TEXT( "UMetahumanBuilderComponent::AddSceneComponentToOwner: Owner is not valid." ) );
+		return nullptr;
 	}
 
-	SpawnedComponents.Empty();
+	USceneComponent* NewSceneComponent = NewObject<USceneComponent>( GetOwner(), ComponentClass, ComponentName );
+	NewSceneComponent->AttachToComponent( ParentComponent, FAttachmentTransformRules::KeepRelativeTransform );
+	NewSceneComponent->RegisterComponent();
+	GetOwner()->AddInstanceComponent( NewSceneComponent );
+
+	return NewSceneComponent;
+}
+
+void UMetahumanBuilderComponent::DestroyManagedOwnerComponents()
+{
+	FName BodySkeletalMeshComponentPropertyName = GetDefault<UMetahumanComponentDataExtractorSettings>()->GetBodySkeletalMeshComponentPropertyName();
+	for ( auto [ ComponentName, Component ] : ManagedOwnerComponents )
+	{
+		if ( ComponentName == BodySkeletalMeshComponentPropertyName )
+		{
+			continue;
+		}
+
+		if ( !IsValid( Component ) )
+		{
+			continue;
+		}
+		Component->DestroyComponent();
+	}
 }
