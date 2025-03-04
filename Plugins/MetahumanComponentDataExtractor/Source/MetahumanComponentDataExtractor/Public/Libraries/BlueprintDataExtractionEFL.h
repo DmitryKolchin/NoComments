@@ -17,6 +17,7 @@ class METAHUMANCOMPONENTDATAEXTRACTOR_API UBlueprintDataExtractionEFL : public U
 public:
 	static TArray<UActorComponent*> ExtractAllBlueprintCreatedComponents(UBlueprint* Blueprint);
 
-	static void CopyAllPropertiesFromOneObjectToAnother(UObject* Source, UObject* Destination);
-	
+	static void CopyPropertiesFromOneObjectToAnother(UObject* Source,
+	                                                 UObject* Destination,
+	                                                 const TArray<FName>& PropertiesToIgnore);
 };

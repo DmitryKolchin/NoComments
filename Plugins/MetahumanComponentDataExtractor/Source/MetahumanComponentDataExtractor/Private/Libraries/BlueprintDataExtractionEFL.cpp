@@ -41,13 +41,21 @@ TArray<UActorComponent*> UBlueprintDataExtractionEFL::ExtractAllBlueprintCreated
 	return ExtractedComponents;
 }
 
-void UBlueprintDataExtractionEFL::CopyAllPropertiesFromOneObjectToAnother(UObject* Source, UObject* Destination)
+void UBlueprintDataExtractionEFL::CopyPropertiesFromOneObjectToAnother(UObject* Source,
+                                                                       UObject* Destination,
+                                                                       const TArray<FName>& PropertiesToIgnore)
 {
 	for ( TFieldIterator<FProperty> PropertyIterator( Source->GetClass() ); PropertyIterator; ++PropertyIterator )
 	{
 		FProperty* Property = *PropertyIterator;
 
 		if ( !Property->HasAnyPropertyFlags( CPF_Edit | CPF_BlueprintVisible ) )
+		{
+			continue;
+		}
+
+		// If we want to ignore this property, then skip it
+		if (PropertiesToIgnore.Contains( Property->GetName() ))
 		{
 			continue;
 		}

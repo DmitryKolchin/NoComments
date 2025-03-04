@@ -3,6 +3,7 @@
 #include "Components/MetahumanBuilderComponent.h"
 
 #include "GroomComponent.h"
+#include "DataAssets/MetahumanBuilderComponentImportSettingsDataAsset.h"
 #include "DataAssets/MetahumanComponentsDataAsset.h"
 #include "Libraries/BlueprintDataExtractionEFL.h"
 #include "Settings/MetahumanComponentDataExtractorSettings.h"
@@ -108,6 +109,11 @@ void UMetahumanBuilderComponent::InitializeOwnerBodyComponent()
 			ensureAlwaysMsgf( false, TEXT( "UMetahumanBuilderComponent::InitializeOwnerBodyComponent: MetahumanComponentsDataAsset is not valid." ) );
 			return;
 		}
+		if (!IsValid( MetahumanBuilderComponentImportSettingsDataAsset ))
+		{
+			ensureAlwaysMsgf( false, TEXT( "UMetahumanBuilderComponent::InitializeManagedOwnerComponentsFromNamesAndClass: MetahumanBuilderComponentImportSettingsDataAsset is not valid." ) );
+			return;
+		}
 	}
 
 	USceneComponent* OwnerBodyComponent = GetOrCreateOwnerBodyComponent();
@@ -139,8 +145,13 @@ void UMetahumanBuilderComponent::InitializeOwnerBodyComponent()
 
 	FTransform BodyComponentTransform = OwnerBodyComponent->GetRelativeTransform();
 
+	// Initialize the body component with the data from the data asset
+	// Taking into account the properties to ignore
 	const FName BodySkeletalMeshComponentPropertyName = MetahumanComponentDataExtractorSettings->GetBodySkeletalMeshComponentPropertyName();
-	UBlueprintDataExtractionEFL::CopyAllPropertiesFromOneObjectToAnother( MetahumanComponentsDataAsset.LoadSynchronous()->GetSkeletalMeshComponentByName( BodySkeletalMeshComponentPropertyName ), OwnerBodyComponent );
+	USkeletalMeshComponent* BodySkeletalMeshComponent = MetahumanComponentsDataAsset.LoadSynchronous()->GetSkeletalMeshComponentByName( BodySkeletalMeshComponentPropertyName );
+	FComponentDataImportSettings BodyDataImportSettings = MetahumanBuilderComponentImportSettingsDataAsset->GetComponentDataImportSettingsForComponentName( BodySkeletalMeshComponentPropertyName );
+
+	UBlueprintDataExtractionEFL::CopyPropertiesFromOneObjectToAnother( BodySkeletalMeshComponent, OwnerBodyComponent, BodyDataImportSettings.PropertiesToNotCopy );
 
 	OwnerBodyComponent->UnregisterComponent();
 	OwnerBodyComponent->RegisterComponent();
@@ -158,6 +169,12 @@ void UMetahumanBuilderComponent::InitializeManagedOwnerComponentsFromNamesAndCla
 		if ( !IsValid( ComponentToAttachTo ) )
 		{
 			ensureAlwaysMsgf( false, TEXT( "UMetahumanBuilderComponent::InitializeManagedOwnerComponentsFromNamesAndClass: ComponentToAttachTo is not valid." ) );
+			return;
+		}
+
+		if (!IsValid( MetahumanBuilderComponentImportSettingsDataAsset ))
+		{
+			ensureAlwaysMsgf( false, TEXT( "UMetahumanBuilderComponent::InitializeManagedOwnerComponentsFromNamesAndClass: MetahumanBuilderComponentImportSettingsDataAsset is not valid." ) );
 			return;
 		}
 	}
@@ -186,7 +203,10 @@ void UMetahumanBuilderComponent::InitializeManagedOwnerComponentsFromNamesAndCla
 			}
 		}
 
-		UBlueprintDataExtractionEFL::CopyAllPropertiesFromOneObjectToAnother( ComponentToTakePropertiesFrom, CurrentProcessedComponent );
+		FComponentDataImportSettings ComponentDataImportSettings = MetahumanBuilderComponentImportSettingsDataAsset->GetComponentDataImportSettingsForComponentName( ComponentName );
+		UBlueprintDataExtractionEFL::CopyPropertiesFromOneObjectToAnother( ComponentToTakePropertiesFrom,
+		                                                                   CurrentProcessedComponent,
+		                                                                   ComponentDataImportSettings.PropertiesToNotCopy );
 		CurrentProcessedComponent->UnregisterComponent();
 		CurrentProcessedComponent->RegisterComponent();
 

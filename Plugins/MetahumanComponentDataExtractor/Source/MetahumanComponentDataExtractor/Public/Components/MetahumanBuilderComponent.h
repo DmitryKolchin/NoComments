@@ -6,6 +6,7 @@
 #include "Components/ActorComponent.h"
 #include "MetahumanBuilderComponent.generated.h"
 
+class UMetahumanBuilderComponentImportSettingsDataAsset;
 class UGroomComponent;
 class UMetahumanComponentsDataAsset;
 
@@ -37,6 +38,9 @@ private:
 
 	UPROPERTY(EditDefaultsOnly)
 	FName BodySkeletalMeshOverrideName = NAME_None;
+
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UMetahumanBuilderComponentImportSettingsDataAsset> MetahumanBuilderComponentImportSettingsDataAsset;
 
 private:
 	void InitializeManagedOwnerComponents();

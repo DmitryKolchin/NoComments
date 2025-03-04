@@ -85,7 +85,9 @@ void UMetahumanComponentsDataAsset::ExtractDataFromMetahumanBlueprint(UObject* O
 		{
 			if ( ComponentNameString.StartsWith( SkeletalMeshComponentPropertyName.ToString() ) )
 			{
-				UBlueprintDataExtractionEFL::CopyAllPropertiesFromOneObjectToAnother( SkeletalMeshComponent, SkeletalMeshComponents[ SkeletalMeshComponentPropertyName ] );
+				UBlueprintDataExtractionEFL::CopyPropertiesFromOneObjectToAnother( SkeletalMeshComponent,
+				                                                                   SkeletalMeshComponents[ SkeletalMeshComponentPropertyName ],
+				                                                                   TArray<FName>{} );
 			}
 		}
 
@@ -93,7 +95,9 @@ void UMetahumanComponentsDataAsset::ExtractDataFromMetahumanBlueprint(UObject* O
 		{
 			if ( ComponentNameString.StartsWith( GroomComponentPropertyName.ToString() ) )
 			{
-				UBlueprintDataExtractionEFL::CopyAllPropertiesFromOneObjectToAnother( GroomComponent, GroomComponents[ GroomComponentPropertyName ] );
+				UBlueprintDataExtractionEFL::CopyPropertiesFromOneObjectToAnother( GroomComponent,
+				                                                                   GroomComponents[ GroomComponentPropertyName ],
+				                                                                   TArray<FName>{} );
 			}
 		}
 	}
