@@ -79,6 +79,7 @@ void UMetahumanBuilderComponent::InitializeManagedOwnerComponents()
 
 	//Let's add all the rest of skeletal mesh components to the owner
 	TArray<FName> SkeletalMeshComponentPropertyNames = MetahumanComponentDataExtractorSettings->GetSkeletalMeshComponentPropertyNames();
+	SkeletalMeshComponentPropertyNames.Remove( MetahumanComponentDataExtractorSettings->GetBodySkeletalMeshComponentPropertyName() );
 	InitializeManagedOwnerComponentsFromNamesAndClass( BodyComponent, SkeletalMeshComponentPropertyNames, USkeletalMeshComponent::StaticClass() );
 
 	//Let's add all the rest of groom  components to the owner
