@@ -39,7 +39,7 @@ private:
 	UPROPERTY(EditDefaultsOnly)
 	FName BodySkeletalMeshOverrideName = NAME_None;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditDefaultsOnly)
 	TObjectPtr<UMetahumanBuilderComponentImportSettingsDataAsset> MetahumanBuilderComponentImportSettingsDataAsset;
 
 private:

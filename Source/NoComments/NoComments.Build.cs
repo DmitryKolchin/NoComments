@@ -8,7 +8,19 @@ public class NoComments : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 	
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "AIModule", "StateTreeModule", "MetahumanComponentDataExtractor" });
+		PublicDependencyModuleNames.AddRange(new string[] { "Core",
+			"CoreUObject",
+			"Engine",
+			"InputCore",
+			"EnhancedInput",
+			"AIModule",
+			"StateTreeModule",
+			"HairStrandsCore",
+			"MetahumanComponentDataExtractor",
+			"MetaHumanSDKRuntime",
+			"ControlRig",
+			"StateTreeModule",
+		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {});
 
