@@ -21,6 +21,8 @@ class NOCOMMENTS_API ANCCharacter_Base : public ACharacter
 public:
 	ANCCharacter_Base();
 
+	void PostActorCreated() override;
+
 protected:
 	void BeginPlay() override;
 

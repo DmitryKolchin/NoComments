@@ -30,7 +30,7 @@ public:
 	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
 
 private:
-	UPROPERTY( EditInstanceOnly )
+	UPROPERTY( EditAnywhere )
 	TSoftObjectPtr<UMetahumanComponentsDataAsset> MetahumanComponentsDataAsset;
 
 	UPROPERTY()
@@ -42,8 +42,10 @@ private:
 	UPROPERTY(EditDefaultsOnly)
 	TObjectPtr<UMetahumanBuilderComponentImportSettingsDataAsset> MetahumanBuilderComponentImportSettingsDataAsset;
 
-private:
+public:
 	void InitializeManagedOwnerComponents();
+
+private:
 
 	void InitializeOwnerBodyComponent();
 

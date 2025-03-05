@@ -41,6 +41,17 @@ void UMetahumanBuilderComponent::PostEditChangeProperty(struct FPropertyChangedE
 {
 	Super::PostEditChangeProperty( PropertyChangedEvent );
 
+	// No need to do anything if the object is a class default object
+	if (HasAnyFlags( RF_ClassDefaultObject ))
+	{
+		return;
+	}
+
+	if (!IsValid( GetOwner() ) || GetOwner()->HasAnyFlags( RF_ClassDefaultObject ))
+	{
+		return;
+	}
+
 	if ( PropertyChangedEvent.Property->GetName() == GET_MEMBER_NAME_CHECKED( UMetahumanBuilderComponent, MetahumanComponentsDataAsset ) )
 	{
 		InitializeManagedOwnerComponents();
