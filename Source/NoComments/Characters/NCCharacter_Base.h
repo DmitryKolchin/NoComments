@@ -42,6 +42,9 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = "Eyelashes")
 	FName EyelashesMaterialSlotName = TEXT("eyelashes_shader_shader");
 
+public:
+	UMetahumanBuilderComponent* GetMetahumanBuilderComponent() const;
+
 private:
 	void SetupHairLOD();
 

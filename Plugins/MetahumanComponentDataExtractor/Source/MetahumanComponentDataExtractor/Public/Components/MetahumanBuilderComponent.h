@@ -45,6 +45,8 @@ private:
 public:
 	void InitializeManagedOwnerComponents();
 
+	void SetMetahumanComponentsDataAsset(UMetahumanComponentsDataAsset* NewMetahumanComponentsDataAsset);
+
 private:
 
 	void InitializeOwnerBodyComponent();

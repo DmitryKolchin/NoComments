@@ -75,6 +75,11 @@ void ANCCharacter_Base::BeginPlay()
 	SetupHairLOD();
 }
 
+UMetahumanBuilderComponent* ANCCharacter_Base::GetMetahumanBuilderComponent() const
+{
+	return MetahumanBuilderComponent;
+}
+
 void ANCCharacter_Base::SetupHairLOD()
 {
 	if ( UGroomBlueprintLibrary::IsHairStrandsSupportedInWorld( this ) )

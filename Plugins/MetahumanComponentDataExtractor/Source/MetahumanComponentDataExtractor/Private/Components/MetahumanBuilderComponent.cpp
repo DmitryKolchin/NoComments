@@ -107,6 +107,21 @@ void UMetahumanBuilderComponent::InitializeManagedOwnerComponents()
 	InitializeManagedOwnerComponentsFromNamesAndClass( FaceComponent, GroomComponentPropertyNames, UGroomComponent::StaticClass() );
 }
 
+void UMetahumanBuilderComponent::SetMetahumanComponentsDataAsset(UMetahumanComponentsDataAsset* NewMetahumanComponentsDataAsset)
+{
+	{
+		if (!IsValid( NewMetahumanComponentsDataAsset ))
+		{
+			ensureAlwaysMsgf( false, TEXT( "UMetahumanBuilderComponent::SetMetahumanComponentsDataAsset: NewMetahumanComponentsDataAsset is not valid." ) );
+			return;
+		}
+	}
+
+	MetahumanComponentsDataAsset = NewMetahumanComponentsDataAsset;
+
+	InitializeManagedOwnerComponents();
+}
+
 void UMetahumanBuilderComponent::InitializeOwnerBodyComponent()
 {
 	{
