@@ -2,6 +2,7 @@
 
 #include "CrowdController.h"
 
+#include "CrowdAgent.h"
 #include "Algo/RandomShuffle.h"
 #include "Components/MetahumanBuilderComponent.h"
 #include "Components/SplineComponent.h"
@@ -37,14 +38,15 @@ void ACrowdController::GenerateCrowd()
 		const float SplineDirectionRotationAngle = FMath::RandBool() ? 90.f : -90.f;
 		const FVector Offset = SplineDirection.RotateAngleAxis( SplineDirectionRotationAngle, FVector::UpVector ) * FMath::FRandRange( 0.f, MaxOffset );
 
-		ANCCharacter_Base* CrowdAgent = GetWorld()->SpawnActor<ANCCharacter_Base>( CrowdAgentClass, Location + Offset, Rotation );
+		ACrowdAgent* CrowdAgent = GetWorld()->SpawnActor<ACrowdAgent>( CrowdAgentClass, Location + Offset, Rotation );
 
 		if ( !IsValid( CrowdAgent ) )
 		{
 			continue;
 		}
+
 		UMetahumanComponentsDataAsset* MetaHumanComponentsDataAsset = RandomizedPoolOfMetaHumanPresets.Pop();
-		if (RandomizedPoolOfMetaHumanPresets.IsEmpty())
+		if ( RandomizedPoolOfMetaHumanPresets.IsEmpty() )
 		{
 			RandomizedPoolOfMetaHumanPresets = GetRandomizedPoolOfMetaHumanPresets();
 		}
@@ -53,6 +55,26 @@ void ACrowdController::GenerateCrowd()
 
 		CrowdAgent->AttachToActor( this, FAttachmentTransformRules::KeepWorldTransform );
 		CrowdAgents.Add( CrowdAgent );
+
+		if ( CrowdAgents.IsValidIndex( AgentIndex - 1 ) )
+		{
+			ACrowdAgent* PreviousCrowdAgent = CrowdAgents[ AgentIndex - 1 ];
+			CrowdAgent->AddNeighbor( PreviousCrowdAgent );
+			PreviousCrowdAgent->AddNeighbor( CrowdAgent );
+		}
+	}
+
+	if (AgentsNum < 2)
+	{
+		return;
+	}
+
+	ACrowdAgent* FirstCrowdAgent = CrowdAgents[ 0 ];
+	ACrowdAgent* LastCrowdAgent = CrowdAgents.Last();
+	if ( IsValid( FirstCrowdAgent ) && IsValid( LastCrowdAgent ) )
+	{
+		FirstCrowdAgent->AddNeighbor( LastCrowdAgent );
+		LastCrowdAgent->AddNeighbor( FirstCrowdAgent );
 	}
 }
 
@@ -66,6 +88,8 @@ void ACrowdController::DestroyCreatedAgents()
 		}
 		CrowdAgent->Destroy();
 	}
+
+	CrowdAgents.Empty();
 }
 
 TArray<UMetahumanComponentsDataAsset*> ACrowdController::GetRandomizedPoolOfMetaHumanPresets() const

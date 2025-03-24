@@ -3,12 +3,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "CrowdAgent.h"
 #include "GameFramework/Actor.h"
-#include "NoComments/Characters/NCCharacter_Base.h"
 #include "CrowdController.generated.h"
 
+class ACrowdAgent;
 class UMetahumanComponentsDataAsset;
-class ANCCharacter_Base;
 class USplineComponent;
 
 UCLASS()
@@ -25,10 +25,10 @@ private:
 	USplineComponent* SplineComponent;
 
 	UPROPERTY()
-	TArray<ANCCharacter_Base*> CrowdAgents = TArray<ANCCharacter_Base*>{};
+	TArray<ACrowdAgent*> CrowdAgents = TArray<ACrowdAgent*>{};
 
 	UPROPERTY( EditDefaultsOnly )
-	TSubclassOf<ANCCharacter_Base> CrowdAgentClass = ANCCharacter_Base::StaticClass();
+	TSubclassOf<ANCCharacter_Base> CrowdAgentClass = ACrowdAgent::StaticClass();
 
 	UPROPERTY(EditAnywhere)
 	int32 AgentsNum = 10;
