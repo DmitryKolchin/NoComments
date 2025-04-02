@@ -24,8 +24,11 @@ private:
 	UPROPERTY()
 	FVector Velocity;
 
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere)
 	TArray<ACrowdAgent*> Neighbors;
+
+	UPROPERTY()
+	FVector StartLocation;
 
 public:
 	UFUNCTION(BlueprintCallable)
@@ -38,4 +41,10 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	const TArray<ACrowdAgent*>& GetNeighbors() const;
+
+	UFUNCTION(BlueprintPure)
+	FVector GetStartLocation() const;
+
+	UFUNCTION(BlueprintPure)
+	bool IsAtStartLocation() const;
 };

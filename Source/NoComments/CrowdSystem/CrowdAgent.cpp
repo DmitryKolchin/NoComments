@@ -11,6 +11,8 @@ void ACrowdAgent::BeginPlay()
 	Super::BeginPlay();
 
 	GetCharacterMovement()->Deactivate();
+
+	StartLocation = GetActorLocation();
 }
 
 FVector ACrowdAgent::GetVelocity() const
@@ -43,4 +45,14 @@ void ACrowdAgent::AddNeighbor(ACrowdAgent* Neighbor)
 const TArray<ACrowdAgent*>& ACrowdAgent::GetNeighbors() const
 {
 	return Neighbors;
+}
+
+FVector ACrowdAgent::GetStartLocation() const
+{
+	return StartLocation;
+}
+
+bool ACrowdAgent::IsAtStartLocation() const
+{
+	return StartLocation.Equals( GetActorLocation(), 1.f );
 }
