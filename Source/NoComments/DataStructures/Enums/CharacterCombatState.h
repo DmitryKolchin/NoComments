@@ -9,5 +9,6 @@ enum class ECharacterCombatState : uint8
 	Idle,
 	Attacking,
 	Blocking,
-	Stunned
+	Stunned,
+	KnockedOut,
 };

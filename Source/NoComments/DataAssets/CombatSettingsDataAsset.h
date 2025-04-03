@@ -15,13 +15,38 @@ class NOCOMMENTS_API UCombatSettingsDataAsset : public UDataAsset
 	GENERATED_BODY()
 
 private:
+	/**
+	 * The maximum amount of health the character can have
+	 */
+	UPROPERTY( EditDefaultsOnly, Category = "Health" )
+	float MaxHealth = 100.f;
+
+	/**
+	 * The maximum amount of stamina the character can have
+	 */
+	UPROPERTY( EditDefaultsOnly, Category = "Stamina" )
+	float MaxStamina = 100.f;
+
+	UPROPERTY(EditDefaultsOnly, Category="Stamina")
+	float StaminaRestoreRate = 0.5f;
+
+	UPROPERTY(EditDefaultsOnly, Category="Stamina")
+	float StaminaAfterAttackRestoreDelay = 1.0f;
+
+	/**
+	 * Distance at which soft lock will be applied
+	 */
+	UPROPERTY( EditDefaultsOnly, Category = "Soft Lock" )
+	float SoftLockDistance = 500.f;
+
+	/** Rate of the attack animations */
 	UPROPERTY( EditDefaultsOnly, Category = "Attack" )
 	float AttackSpeed = 2.f;
 
 	UPROPERTY( EditDefaultsOnly, Category = "Attack|Damage Dealing Sphere" )
 	bool DEBUG_ShowDamageDealingSphere = true;
 
-	UPROPERTY( EditDefaultsOnly, Category="Attack|Damage Dealing Sphere" )
+	UPROPERTY( EditDefaultsOnly, Category = "Attack|Damage Dealing Sphere" )
 	float DamageDealingSphereRadius = 20.0f;
 
 	/**
@@ -36,29 +61,44 @@ private:
 	UPROPERTY( EditDefaultsOnly, Category = "Walk Speed", DisplayName="Default Walk Speed" )
 	float FightModeWalkSpeed_Default = 300.f;
 
+	/**
+	 * Animation for knockout
+	 */
+	UPROPERTY(EditDefaultsOnly, Category="Knockout")
+	TSoftObjectPtr<UAnimMontage> KnockoutAnimMontage = nullptr;
+
 public:
-	float GetAttackSpeed() const
-	{
-		return AttackSpeed;
-	}
+	UFUNCTION( BlueprintPure )
+	UPARAM( DisplayName = "Attack Speed" ) float GetAttackSpeed() const;
 
-	float GetBlockWalkSpeed() const
-	{
-		return FightModeWalkSpeed_Block;
-	}
+	UFUNCTION( BlueprintPure )
+	UPARAM( DisplayName = "Block Walk Speed" ) float GetBlockWalkSpeed() const;
 
-	float GetIdleWalkSpeed() const
-	{
-		return FightModeWalkSpeed_Default;
-	}
+	UFUNCTION( BlueprintPure )
+	UPARAM( DisplayName = "Idle Walk Speed" ) float GetIdleWalkSpeed() const;
 
-	float GetDamageDealingSphereRadius() const
-	{
-		return DamageDealingSphereRadius;
-	}
+	UFUNCTION( BlueprintPure )
+	UPARAM( DisplayName = "Damage Dealing Sphere Radius" ) float GetDamageDealingSphereRadius() const;
 
-	bool ShouldShowDamageDealingSphere() const
-	{
-		return DEBUG_ShowDamageDealingSphere;
-	}
+	UFUNCTION( BlueprintPure )
+	UPARAM( DisplayName = "Should Show Damage Dealing Sphere" ) bool ShouldShowDamageDealingSphere() const;
+
+	UFUNCTION( BlueprintPure )
+	UPARAM( DisplayName = "Max Health" ) float GetMaxHealth() const;
+
+	UFUNCTION( BlueprintPure )
+	UPARAM( DisplayName = "Max Stamina" ) float GetMaxStamina() const;
+
+	UFUNCTION( BlueprintPure )
+	UPARAM( DisplayName = "Soft Lock Distance" ) float GetSoftLockDistance() const;
+
+	UFUNCTION(BlueprintPure)
+	UPARAM( DisplayName = "Stamina Restore Rate" ) float GetStaminaRestoreRate() const;
+
+	UFUNCTION(BlueprintPure)
+	UPARAM( DisplayName = "Stamina After Attack Restore Delay" ) float GetStaminaAfterAttackRestoreDelay() const;
+
+	UFUNCTION(BlueprintPure)
+	UPARAM( DisplayName = "Knockout Animation" ) TSoftObjectPtr<UAnimMontage> GetKnockoutAnimMontage() const;
+
 };

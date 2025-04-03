@@ -24,6 +24,11 @@ void UDamageDealingSphereComponent::TickComponent(float DeltaTime, ELevelTick Ti
 	// ...
 }
 
+void UDamageDealingSphereComponent::SetDealtDamage(float NewDamage)
+{
+	Damage = NewDamage;
+}
+
 // Called when the game starts
 void UDamageDealingSphereComponent::BeginPlay()
 {

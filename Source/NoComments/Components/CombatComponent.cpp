@@ -7,6 +7,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "NoComments/DataAssets/CombatSettingsDataAsset.h"
+#include "NoComments/DataStructures/Structs/AttackData.h"
 #include "NoComments/Utils/Libraries/DebugFunctionLibrary.h"
 #include "NoComments/Utils/Macros/NC_Macro.h"
 
@@ -33,7 +34,20 @@ void UCombatComponent::BeginPlay()
 		}
 	}
 
-	GetOwner()->OnTakeAnyDamage.AddDynamic( this, &UCombatComponent::TryIncreaseNumberOfAttackTakenBeforeBlock );
+	GetOwner()->OnTakeAnyDamage.AddDynamic( this, &UCombatComponent::OnOwnerTakeDamage );
+
+	UCombatSettingsDataAsset* CombatSettingsAsset = CombatSettings.LoadSynchronous();
+
+	{
+		if ( !IsValid( CombatSettingsAsset ) )
+		{
+			UDebugFunctionLibrary::ThrowDebugError( GET_FUNCTION_NAME_STRING(), "CombatSettings is not valid" );
+			return;
+		}
+	}
+
+	CurrentHealth = CombatSettingsAsset->GetMaxHealth();
+	CurrentStamina = CombatSettingsAsset->GetMaxStamina();
 	// ...
 }
 
@@ -43,59 +57,9 @@ void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 	Super::TickComponent( DeltaTime, TickType, ThisTickFunction );
 
 	// Soft lock logic
-	if ( IsValid( Opponent ) )
+	if ( CanSoftLockOnOpponent() )
 	{
-		{
-			if ( !IsValid( GetOwner() ) )
-			{
-				UDebugFunctionLibrary::ThrowDebugError( GET_FUNCTION_NAME_STRING(), "Owner is not valid" );
-				return;
-			}
-		}
-
-		ACharacter* OwnerCharacter = Cast<ACharacter>( GetOwner() );
-
-		{
-			if ( !IsValid( OwnerCharacter ) )
-			{
-				UDebugFunctionLibrary::ThrowDebugError( GET_FUNCTION_NAME_STRING(), "OwnerCharacter is not valid" );
-				return;
-			}
-		}
-
-		USkeletalMeshComponent* OwnerSkeletalMeshComponent = OwnerCharacter->GetMesh();
-
-		{
-			if ( !IsValid( OwnerSkeletalMeshComponent ) )
-			{
-				UDebugFunctionLibrary::ThrowDebugError( GET_FUNCTION_NAME_STRING(), "OwnerSkeletalMeshComponent is not valid" );
-				return;
-			}
-		}
-
-		UAnimInstance* OwnerAnimInstance = OwnerSkeletalMeshComponent->GetAnimInstance();
-
-		{
-			if ( !IsValid( OwnerAnimInstance ) )
-			{
-				UDebugFunctionLibrary::ThrowDebugError( GET_FUNCTION_NAME_STRING(), "OwnerAnimInstance is not valid" );
-				return;
-			}
-		}
-
-		/* Soft lock is not supposed to work during any montage. otherwise the character will rotate to the target enemy
-		// in the middle of the attack animation
-		if ( OwnerAnimInstance->IsAnyMontagePlaying() )
-		{
-			return;
-		}
-		*/
-
-		FRotator NewOwnerRotation = GetOwner()->GetActorRotation();
-		NewOwnerRotation.Yaw = UKismetMathLibrary::FindLookAtRotation( GetOwner()->GetActorLocation(), Opponent->GetActorLocation() ).Yaw;
-
-		// TODO: Make rotation speed adjustable
-		GetOwner()->SetActorRotation( NewOwnerRotation );
+		SoftLockOnOpponent();
 	}
 }
 
@@ -148,10 +112,60 @@ int32 UCombatComponent::GetNumberOfAttackTakenBeforeBlock() const
 	return NumberOfAttackTakenBeforeBlock;
 }
 
-void UCombatComponent::PlayAttackMontage(const FName& DamageDealingComponentSocketName, TSoftObjectPtr<UAnimMontage> MontageToPlay)
+float UCombatComponent::GetCurrentHealth() const
+{
+	return CurrentHealth;
+}
+
+float UCombatComponent::GetCurrentStamina() const
+{
+	return CurrentStamina;
+}
+
+bool UCombatComponent::CanPerformAnyAttack() const
+{
+
+	// We can not attack when we are knocked out
+	if (CharacterCombatState == ECharacterCombatState::KnockedOut)
+	{
+		return false;
+	}
+
+	UAnimInstance* OwnerAnimInstance = GetOwnerAnimInstance();
+
+	{
+		if ( !IsValid( OwnerAnimInstance ) )
+		{
+			UDebugFunctionLibrary::ThrowDebugError( GET_FUNCTION_NAME_STRING(), "OwnerAnimInstance is not valid" );
+			return false;
+		}
+	}
+
+	// If we are in the middle of an attack, we can't do another one
+	return !OwnerAnimInstance->IsAnyMontagePlaying();
+}
+
+bool UCombatComponent::CanPerformGivenAttack(const FAttackData& AttackData) const
+{
+	// If we cannot perform any attack, we cannot perform this one
+	if ( !CanPerformAnyAttack() )
+	{
+		return false;
+	}
+
+	// If we don't have enough stamina, we cannot attack
+	if ( GetCurrentStamina() < AttackData.StaminaCost )
+	{
+		return false;
+	}
+
+	return true;
+}
+
+void UCombatComponent::PlayAttackMontage(const FAttackData& AttackData)
 {
 	{
-		if ( !IsValid( MontageToPlay.LoadSynchronous() ) )
+		if ( !IsValid( AttackData.AttackAnimationMontage.LoadSynchronous() ) )
 		{
 			UDebugFunctionLibrary::ThrowDebugError( GET_FUNCTION_NAME_STRING(), "MontageToPlay is not valid" );
 			return;
@@ -162,8 +176,22 @@ void UCombatComponent::PlayAttackMontage(const FName& DamageDealingComponentSock
 			UDebugFunctionLibrary::ThrowDebugError( GET_FUNCTION_NAME_STRING(), "CombatSettings is not valid" );
 			return;
 		}
+
+		if ( CurrentStamina < AttackData.StaminaCost )
+		{
+			UDebugFunctionLibrary::ThrowDebugError( GET_FUNCTION_NAME_STRING(), "CurrentStamina is less than 0" );
+			CurrentStamina = 0.f;
+			return;
+		}
+
+		if ( !CanPerformGivenAttack( AttackData ) )
+		{
+			UDebugFunctionLibrary::ThrowDebugError( GET_FUNCTION_NAME_STRING(), "Cannot perform given attack" );
+			return;
+		}
 	}
 
+	CurrentStamina -= AttackData.StaminaCost;
 	UAnimInstance* OwnerAnimInstance = GetOwnerAnimInstance();
 
 	{
@@ -174,28 +202,34 @@ void UCombatComponent::PlayAttackMontage(const FName& DamageDealingComponentSock
 		}
 	}
 
-	// If we are already playing a montage, we should not interrupt it
-	if ( OwnerAnimInstance->IsAnyMontagePlaying() )
+	// Very strange bug: this function is called twice when play first time after restarting the game
+	if ( !OwnerAnimInstance->OnMontageEnded.IsAlreadyBound( this, &UCombatComponent::PerformPostAttackFinishedActions ) )
 	{
-		return;
+		OwnerAnimInstance->OnMontageEnded.AddDynamic( this, &UCombatComponent::PerformPostAttackFinishedActions );
 	}
 
-	OwnerAnimInstance->OnMontageEnded.AddDynamic( this, &UCombatComponent::PerformPostAttackFinishedActions );
+	OwnerAnimInstance->Montage_Play( AttackData.AttackAnimationMontage.LoadSynchronous(), CombatSettings.LoadSynchronous()->GetAttackSpeed() );
 
-	OwnerAnimInstance->Montage_Play( MontageToPlay.LoadSynchronous(), CombatSettings.LoadSynchronous()->GetAttackSpeed() );
+	SpawnDamageDealingSphereForAttack( AttackData );
+
+	if ( CharacterCombatState == ECharacterCombatState::Blocking )
+	{
+		// If we are blocking, we need to deactivate the block
+		DeactivateBlock();
+	}
 
 	CharacterCombatState = ECharacterCombatState::Attacking;
 
-	UDamageDealingSphereComponent* DamageDealingSphereComponent = NewObject<UDamageDealingSphereComponent>( GetOwner() );
+	// Prevent stamina from being restored for a time after attack
+	if ( StaminaRestoreTimerHandle.IsValid() )
+	{
+		StaminaRestoreTimerHandle.Invalidate();
+	}
 
-	// Don't need to check for validity as we've already checked it when getting anim instance
-	USkeletalMeshComponent* OwnerSkeletalMeshComponent = GetOwner()->FindComponentByClass<USkeletalMeshComponent>();
-
-	DamageDealingSphereComponent->SetupAttachment( OwnerSkeletalMeshComponent, DamageDealingComponentSocketName );
-	DamageDealingSphereComponent->RegisterComponent();
-	DamageDealingSphereComponent->SetRelativeLocation( FVector::ZeroVector );
-	DamageDealingSphereComponent->SetSphereRadius( CombatSettings.LoadSynchronous()->GetDamageDealingSphereRadius(), true );
-	DamageDealingSphereComponent->SetHiddenInGame( !CombatSettings.LoadSynchronous()->ShouldShowDamageDealingSphere() );
+	GetWorld()->GetTimerManager().SetTimer( StaminaRestoreTimerHandle,
+	                                        this,
+	                                        &UCombatComponent::RestoreStamina,
+	                                        CombatSettings.LoadSynchronous()->GetStaminaAfterAttackRestoreDelay() );
 }
 
 void UCombatComponent::SetOwnerWalkSpeed(float NewWalkSpeed)
@@ -281,12 +315,126 @@ void UCombatComponent::PerformPostAttackFinishedActions(UAnimMontage* FinishedAt
 	OnAttackFinished.Broadcast();
 }
 
-void UCombatComponent::TryIncreaseNumberOfAttackTakenBeforeBlock(AActor* DamagedActor, float Damage, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser)
+void UCombatComponent::OnOwnerTakeDamage(AActor* DamagedActor,
+                                         float Damage,
+                                         const class UDamageType* DamageType,
+                                         class AController* InstigatedBy,
+                                         AActor* DamageCauser)
 {
-	if (GetCharacterCombatState() == ECharacterCombatState::Blocking)
+	if ( GetCharacterCombatState() == ECharacterCombatState::Blocking )
 	{
 		return;
 	}
 
+	CurrentHealth -= Damage;
+
+	// Track death
+	if ( CurrentHealth <= 0.f )
+	{
+		KnockOutOwner();
+		return;
+	}
+
+	// Track number of attacks taken before block
 	++NumberOfAttackTakenBeforeBlock;
+}
+
+void UCombatComponent::SpawnDamageDealingSphereForAttack(const FAttackData& AttackData)
+{
+	UDamageDealingSphereComponent* DamageDealingSphereComponent = NewObject<UDamageDealingSphereComponent>( GetOwner() );
+
+	// Don't need to check for validity as we've already checked it when getting anim instance
+	USkeletalMeshComponent* OwnerSkeletalMeshComponent = GetOwner()->FindComponentByClass<USkeletalMeshComponent>();
+
+	// Setting up the DamageDealingSphereComponent
+	DamageDealingSphereComponent->SetupAttachment( OwnerSkeletalMeshComponent, AttackData.DamageDealingComponentSocketName );
+	DamageDealingSphereComponent->SetDealtDamage( AttackData.DamageDealt );
+	DamageDealingSphereComponent->RegisterComponent();
+	DamageDealingSphereComponent->SetRelativeLocation( FVector::ZeroVector );
+	DamageDealingSphereComponent->SetSphereRadius( CombatSettings.LoadSynchronous()->GetDamageDealingSphereRadius(), true );
+	DamageDealingSphereComponent->SetHiddenInGame( !CombatSettings.LoadSynchronous()->ShouldShowDamageDealingSphere() );
+}
+
+bool UCombatComponent::CanSoftLockOnOpponent() const
+{
+	if ( !IsValid( Opponent ) )
+	{
+		return false;
+	}
+
+	{
+		if ( !IsValid( CombatSettings.LoadSynchronous() ) )
+		{
+			UDebugFunctionLibrary::ThrowDebugError( GET_FUNCTION_NAME_STRING(), "CombatSettings is not valid" );
+			return false;
+		}
+		if ( !IsValid( GetOwner() ) )
+		{
+			UDebugFunctionLibrary::ThrowDebugError( GET_FUNCTION_NAME_STRING(), "GetOwner() is not valid" );
+			return false;
+		}
+	}
+
+	float DistanceToOpponent = FVector::Distance( GetOwner()->GetActorLocation(), Opponent->GetActorLocation() );
+	return DistanceToOpponent <= CombatSettings.LoadSynchronous()->GetSoftLockDistance();
+}
+
+void UCombatComponent::SoftLockOnOpponent()
+{
+	{
+		if ( !IsValid( Opponent ) )
+		{
+			UDebugFunctionLibrary::ThrowDebugError( GET_FUNCTION_NAME_STRING(), "Opponent is not valid" );
+			return;
+		}
+		if ( !IsValid( GetOwner() ) )
+		{
+			UDebugFunctionLibrary::ThrowDebugError( GET_FUNCTION_NAME_STRING(), "Owner is not valid" );
+			return;
+		}
+	}
+
+	FRotator NewOwnerRotation = GetOwner()->GetActorRotation();
+	NewOwnerRotation.Yaw = UKismetMathLibrary::FindLookAtRotation( GetOwner()->GetActorLocation(), Opponent->GetActorLocation() ).Yaw;
+
+	// TODO: Make rotation speed adjustable
+	GetOwner()->SetActorRotation( NewOwnerRotation );
+}
+
+void UCombatComponent::RestoreStamina()
+{
+	CurrentStamina += StaminaRestoreAmount;
+
+	if ( CombatSettings.LoadSynchronous()->GetMaxStamina() <= CurrentStamina )
+	{
+		CurrentStamina = CombatSettings.LoadSynchronous()->GetMaxStamina();
+		return;
+	}
+
+	GetWorld()->GetTimerManager().SetTimer( StaminaRestoreTimerHandle,
+	                                        this,
+	                                        &UCombatComponent::RestoreStamina,
+	                                        CombatSettings.LoadSynchronous()->GetStaminaRestoreRate() );
+}
+
+void UCombatComponent::KnockOutOwner()
+{
+	UAnimInstance* OwnerAnimInstance = GetOwnerAnimInstance();
+
+	{
+		if ( !IsValid( OwnerAnimInstance ) )
+		{
+			UDebugFunctionLibrary::ThrowDebugError( GET_FUNCTION_NAME_STRING(), "OwnerAnimInstance is not valid" );
+			return;
+		}
+	}
+
+	CharacterCombatState = ECharacterCombatState::KnockedOut;
+
+	OwnerAnimInstance->Montage_Play( CombatSettings.LoadSynchronous()->GetKnockoutAnimMontage().LoadSynchronous() );
+	OnOwnerKnockedOut.Broadcast();
+
+	GetOwner()->OnTakeAnyDamage.RemoveDynamic( this, &UCombatComponent::OnOwnerTakeDamage );
+	SetComponentTickEnabled( false );
+
 }

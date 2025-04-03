@@ -7,6 +7,7 @@
 #include "NoComments/DataStructures/Enums/CharacterCombatState.h"
 #include "CombatComponent.generated.h"
 
+struct FAttackData;
 class UCombatSettingsDataAsset;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE( FCombatComponentDelegate );
@@ -32,6 +33,9 @@ public:
 	UPROPERTY( BlueprintAssignable )
 	FCombatComponentDelegate OnAttackFinished;
 
+	UPROPERTY(BlueprintAssignable)
+	FCombatComponentDelegate OnOwnerKnockedOut;
+
 private:
 	UPROPERTY( EditDefaultsOnly, Category="Settings" )
 	TSoftObjectPtr<UCombatSettingsDataAsset> CombatSettings = nullptr;
@@ -44,6 +48,21 @@ private:
 
 	UPROPERTY()
 	int32 NumberOfAttackTakenBeforeBlock = 0;
+
+	UPROPERTY()
+	float CurrentHealth = 0.0f;
+
+#pragma region STAMINA
+	UPROPERTY()
+	float CurrentStamina = 0.0f;
+
+	UPROPERTY()
+	FTimerHandle StaminaRestoreTimerHandle;
+
+	UPROPERTY()
+	float StaminaRestoreAmount = 1.f;
+
+#pragma endregion
 
 public:
 #pragma region  FIGHT MODE
@@ -63,18 +82,29 @@ public:
 #pragma endregion
 
 	UFUNCTION( BlueprintPure )
-	ECharacterCombatState GetCharacterCombatState() const;
+	UPARAM( DisplayName = "Character Combat State" )ECharacterCombatState GetCharacterCombatState() const;
 
-	UFUNCTION(BlueprintPure)
-	AActor* GetTargetOpponent() const;
+	UFUNCTION( BlueprintPure )
+	UPARAM( DisplayName = "Target Opponent" )AActor* GetTargetOpponent() const;
 
-	UFUNCTION(BlueprintPure)
-	int32 GetNumberOfAttackTakenBeforeBlock() const;
+	UFUNCTION( BlueprintPure )
+	UPARAM( DisplayName = "Number of Attacks Taken Before Block" )int32 GetNumberOfAttackTakenBeforeBlock() const;
 
-protected:
+	UFUNCTION( BlueprintPure )
+	UPARAM( DisplayName = "Current Health" )float GetCurrentHealth() const;
+
+	UFUNCTION( BlueprintPure )
+	UPARAM( DisplayName = "Current Stamina" )float GetCurrentStamina() const;
+
+	UFUNCTION( BlueprintPure )
+	UPARAM( DisplayName = "Can Perform Any Attack" ) bool CanPerformAnyAttack() const;
+
+	UFUNCTION( BlueprintPure )
+	UPARAM( DisplayName = "Can Perform Given Attack" ) bool CanPerformGivenAttack(const FAttackData& AttackData) const;
+
 	// Generic function to play any attack montage
 	UFUNCTION( BlueprintCallable )
-	void PlayAttackMontage(const FName& DamageDealingComponentSocketName, TSoftObjectPtr<UAnimMontage> MontageToPlay);
+	void PlayAttackMontage(const FAttackData& AttackData);
 
 private:
 #pragma region WALK SPEED
@@ -96,5 +126,19 @@ private:
 	void PerformPostAttackFinishedActions(UAnimMontage* FinishedAttackMontage, bool bInterrupted);
 
 	UFUNCTION()
-	void TryIncreaseNumberOfAttackTakenBeforeBlock(AActor* DamagedActor, float Damage, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser);
+	void OnOwnerTakeDamage(AActor* DamagedActor,
+	                       float Damage,
+	                       const class UDamageType* DamageType,
+	                       class AController* InstigatedBy,
+	                       AActor* DamageCauser);
+
+	void SpawnDamageDealingSphereForAttack(const FAttackData& AttackData);
+
+	bool CanSoftLockOnOpponent() const;
+
+	void SoftLockOnOpponent();
+
+	void RestoreStamina();
+
+	void KnockOutOwner();
 };

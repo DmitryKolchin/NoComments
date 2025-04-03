@@ -36,11 +36,13 @@ private:
 	UPROPERTY( EditDefaultsOnly, Category="Components" )
 	ULODSyncComponent* LODSyncComponent;
 
+
 	UPROPERTY(EditDefaultsOnly, Category = "Eyelashes")
 	FName EyelashesHiLODMaterialSlotName = TEXT("eyelashes_HiLOD_shader_shader");
 
 	UPROPERTY(EditDefaultsOnly, Category = "Eyelashes")
 	FName EyelashesMaterialSlotName = TEXT("eyelashes_shader_shader");
+
 
 public:
 	UMetahumanBuilderComponent* GetMetahumanBuilderComponent() const;

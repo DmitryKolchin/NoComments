@@ -6,7 +6,7 @@
 #include "Engine/DataAsset.h"
 #include "CombatAnimationsDataAsset.generated.h"
 
-struct FAttackAnimationInfo;
+struct FAttackData;
 /**
  * Base class for data assets that store combat related animations
  */
@@ -17,11 +17,11 @@ class NOCOMMENTS_API UCombatAnimationsDataAsset : public UDataAsset
 
 public:
 	UPROPERTY( EditDefaultsOnly, BlueprintReadOnly )
-	TArray<FAttackAnimationInfo> LightAttacks;
+	TArray<FAttackData> LightAttacks;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TArray<FAttackAnimationInfo> MidAttacks;
+	TArray<FAttackData> MidAttacks;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TArray<FAttackAnimationInfo> HeavyAttacks;
+	TArray<FAttackData> HeavyAttacks;
 };
