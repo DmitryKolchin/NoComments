@@ -64,32 +64,87 @@ TO BE FILLED LATER
 
 ## Implementation
 
-## Tools 
+## Tools
 
-### Metahuman Data Extractor 
+### Metahuman Data Extractor
+
 #### Motivation
 
-Given that all of the characters in game - player, enemies, NPCS - are going to be Epic's Meta Humans [(MetaHuman | Realistic Person Creator, s.d.)](https://www.unrealengine.com/en-US/metahuman), I was able to foresee a problem arising:
-- Be default, when metahuman is imported, UE creates a separate Blueprint with all the skeletal meshes and groom elements setup.
-- This means, that we have to use a separate class for each new character. 
-- And this creates problem when we want to use all of that within our custom class - we need to manually move all of the skeletal meshes to our blueprint
-- And if we still cannot use multiple Meta Humans with one class since all of that skeletal mesh parameters are hardcoded.
+The *No Comments* project makes extensive use of Epic Games’ **MetaHuman** technology for all characters, including the player, enemies, and NPCs [(MetaHuman | Realistic Person Creator, s.d.)](https://www.unrealengine.com/en-US/metahuman). While this decision supports high-quality character visuals and animation fidelity, it introduced a number of significant technical challenges during implementation in Unreal Engine:
 
-In order to address all of those problems, I developed the Meta Human Data Extractor plugin. 
+- Each MetaHuman is imported into Unreal Engine as a unique Blueprint containing specific skeletal meshes and groom (hair) components.
+- Consequently, using multiple MetaHumans in a project often necessitates the creation of distinct character classes for each one.
+- Attempting to integrate these elements into a unified, custom character class requires laborious manual transfer of skeletal mesh components from the MetaHuman Blueprint.
+- Moreover, the rigid structure of the auto-generated Blueprints prevents developers from dynamically assigning MetaHuman assets at runtime, due to hardcoded references.
 
-### Extracting and storing the Metahuman Data
+To address these challenges, I designed and implemented a custom plugin: **Metahuman Data Extractor**.
 
-To make a convinient way to dynamically loadup metahumans within a single class, I developed a ```UMetahumanComponentsDataAsset```. It has:
-- SkeletalMeshComponents - a Map of ```FName``` values to ```USkeletalMeshComponent*```, which stores a name of the component (e.g. Face or Body) as a key and the copy of the component from the source metahuman blueprint as a value
-- GroomComponents - analogical map 
-- TSoftObjectPtr<UBlueprint> SourceMetahumanBlueprint - soft reference to the source Blueprint of the Meta Human. Making it a soft reference makes it possible to load the Data Asset without loading the source blueprint each time it appears in the content browser.
+---
 
-From the functionality perspective, the most intersting is ```ExtractDataFromMetahumanBlueprint(UObject* Object)``` function - it accepts the Metahuman Blueprint, and fills the data asset with all the required component data. 
+### Overview of Functionality
 
-Let's dicuss some challenges faced during the implmentation of this part:
-#### Magical values
+The plugin’s core component is the `UMetahumanComponentsDataAsset`, a data asset designed to store and manage MetaHuman component data in a modular, runtime-accessible form. Its key elements include:
 
-The only way how we can distinguish the Face skeletal mesh from the Body skeletal mesh is by their ```Name```, which is set as a hardcoded value within the imported blueprint. These names - ```Face```, ```Feet```, ```Legs```, ```Torso``` and ```Body``` (similar list for the Groom) - are the same across the whole project, and there are several places I need to access them from. Basically, those are global values, and I needed 
+- **SkeletalMeshComponents**: A map of `FName` to `USkeletalMeshComponent*` that stores labelled skeletal mesh components (e.g., “Face”, “Body”) from the original MetaHuman Blueprint.
+- **GroomComponents**: A similar map for hair and facial hair components.
+- **SourceMetahumanBlueprint**: A `TSoftObjectPtr<UBlueprint>` reference pointing to the original MetaHuman Blueprint. As a soft reference, it avoids loading the entire asset into memory unless explicitly needed, which helps optimise performance and reduce memory overhead.
+
+The plugin provides a critical function, `ExtractDataFromMetahumanBlueprint(UObject* Object)`, which automates the process of parsing a provided MetaHuman Blueprint and extracting all relevant components. These are then stored in the data asset for use within a shared custom character class.
+
+---
+
+### Technical Challenges and Solutions
+
+#### Identifying “Magic Values”
+
+One of the main issues encountered during development was the reliance on **hardcoded property names** within the MetaHuman Blueprints. For example, distinguishing the “Face” skeletal mesh from the “Body” mesh is only possible by checking the component's name, which is consistent across MetaHuman imports but not formally exposed or documented.
+
+These string-based identifiers, such as `"Face"`, `"Torso"`, `"Legs"`, and their equivalents for groom components, function as *magic values*—arbitrary constants embedded in code. As McConnell (2004:338) notes, such values represent global data that conceptually applies to the entire application and should be centralised to reduce redundancy and error-proneness.
+
+To manage this, I created a subclass of `UDeveloperSettings` called `UMetahumanComponentDataExtractorSettings`. This class provides a centralised configuration for the MetaHuman component names and relevant references:
+
+```cpp
+UCLASS(Config=Editor, defaultconfig)
+class METAHUMANCOMPONENTDATAEXTRACTOR_API UMetahumanComponentDataExtractorSettings : public UDeveloperSettings
+{
+    GENERATED_BODY()
+
+private:
+    UPROPERTY(Config, EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+    TArray<FName> SkeletalMeshComponentPropertyNames;
+
+    UPROPERTY(Config, EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+    TArray<FName> GroomComponentPropertyNames;
+
+    UPROPERTY(Config, EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+    FName BodySkeletalMeshComponentPropertyName = "Body";
+
+    UPROPERTY(Config, EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+    FName FaceSkeletalMeshComponentPropertyName = "Face";
+
+    UPROPERTY(Config, EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+    TSoftObjectPtr<UBlueprint> MetahumanComponentDataExtractorWidget;
+
+public:
+    const TArray<FName>& GetSkeletalMeshComponentPropertyNames() const;
+    const TArray<FName>& GetGroomComponentPropertyNames() const;
+    FName GetBodySkeletalMeshComponentPropertyName() const;
+    FName GetFaceSkeletalMeshComponentPropertyName() const;
+    TSoftObjectPtr<UBlueprint> GetMetahumanComponentDataExtractorWidget() const;
+};
+```
+
+These values can be accessed in any relevant C++ context as follows:
+
+```cpp
+const UMetahumanComponentDataExtractorSettings* Settings = GetDefault<UMetahumanComponentDataExtractorSettings>();
+TArray<FName> SkeletalMeshNames = Settings->GetSkeletalMeshComponentPropertyNames();
+```
+
+This design enhances maintainability and readability, and ensures consistency across the codebase.
+
+
+
 
 ### Process
 - Provide a step-by-step breakdown of your development process, including key milestones and decisions made throughout the project.  
