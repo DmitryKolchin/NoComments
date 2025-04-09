@@ -27,8 +27,13 @@ public:
 
 	virtual bool CanVisualizeAsset(UObject* Object) override;
 
+	UFUNCTION(BlueprintCallable)
+	static void UpdateEmbeddedThumbnailFromSourceMetahumanBlueprint(UMetahumanComponentsDataAsset* MetahumanComponentsDataAsset);
+
 private:
 	const FObjectThumbnail* GetThumbnailForDataAsset(UMetahumanComponentsDataAsset* MetahumanComponentsDataAsset) const;
 
 	UTexture2D* GetThumbnailTextureFromObjectThumbnail(const FObjectThumbnail* ObjectThumbnail) const;
+
+
 };

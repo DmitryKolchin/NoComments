@@ -3,14 +3,13 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Editor/Blutility/Private/EditorFunctionLibrary.h"
-#include "BlueprintDataExtractionEFL.generated.h"
+#include "BlueprintDataExtractionFL.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class METAHUMANCOMPONENTDATAEXTRACTOR_API UBlueprintDataExtractionEFL : public UEditorFunctionLibrary
+class METAHUMANCOMPONENTDATAEXTRACTOR_API UBlueprintDataExtractionFL : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
 

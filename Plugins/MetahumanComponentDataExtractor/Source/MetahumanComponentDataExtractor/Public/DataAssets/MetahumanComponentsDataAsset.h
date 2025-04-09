@@ -19,8 +19,6 @@ class METAHUMANCOMPONENTDATAEXTRACTOR_API UMetahumanComponentsDataAsset : public
 public:
 	UMetahumanComponentsDataAsset();
 
-	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
-
 private:
 	UPROPERTY( EditDefaultsOnly, Instanced, Category="Skeletal Mesh Components" )
 	TMap<FName, USkeletalMeshComponent*> SkeletalMeshComponents;
@@ -46,7 +44,6 @@ public:
 
 	bool HasSourceMetahumanBlueprint() const;
 
-	// Expects the source metahuman blueprint to be set
-	void UpdateEmbeddedThumbnail();
+	TSoftObjectPtr<UBlueprint> GetSourceMetahumanBlueprint() const;
 
 };

@@ -6,6 +6,7 @@
 #include "DataAssets/MetahumanComponentsDataAsset.h"
 #include "EditorButton/FMCDECommands.h"
 #include "MetahumanComponentDataExtractorEditor/Public/ThumbnailRenderer/MCDEThumbnailRenderer.h"
+#include "Settings/MetahumanComponentDataExtractorEditorSettings.h"
 #include "Settings/MetahumanComponentDataExtractorSettings.h"
 #include "ThumbnailRendering/ThumbnailManager.h"
 
@@ -43,7 +44,7 @@ void FMetahumanComponentDataExtractorEditorModule::ShutdownModule()
 
 void FMetahumanComponentDataExtractorEditorModule::OpenDataAssetWidget()
 {
-	const UMetahumanComponentDataExtractorSettings* Settings = GetDefault<UMetahumanComponentDataExtractorSettings>();
+	const UMetahumanComponentDataExtractorEditorSettings* Settings = GetDefault<UMetahumanComponentDataExtractorEditorSettings>();
 	{
 		if ( !IsValid( Settings ) )
 		{

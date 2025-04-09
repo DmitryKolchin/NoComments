@@ -5,7 +5,7 @@
 #include "GroomComponent.h"
 #include "DataAssets/MetahumanBuilderComponentImportSettingsDataAsset.h"
 #include "DataAssets/MetahumanComponentsDataAsset.h"
-#include "Libraries/BlueprintDataExtractionEFL.h"
+#include "Libraries/BlueprintDataExtractionFL.h"
 #include "Settings/MetahumanComponentDataExtractorSettings.h"
 
 DEFINE_LOG_CATEGORY_STATIC( LogMetahumanBuilderComponent, Log, All );
@@ -37,6 +37,7 @@ void UMetahumanBuilderComponent::TickComponent(float DeltaTime, ELevelTick TickT
 	// ...
 }
 
+#if !UE_BUILD_SHIPPING
 void UMetahumanBuilderComponent::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
 {
 	Super::PostEditChangeProperty( PropertyChangedEvent );
@@ -57,6 +58,7 @@ void UMetahumanBuilderComponent::PostEditChangeProperty(struct FPropertyChangedE
 		InitializeManagedOwnerComponents();
 	}
 }
+#endif
 
 void UMetahumanBuilderComponent::InitializeManagedOwnerComponents()
 {
@@ -177,7 +179,7 @@ void UMetahumanBuilderComponent::InitializeOwnerBodyComponent()
 	USkeletalMeshComponent* BodySkeletalMeshComponent = MetahumanComponentsDataAsset.LoadSynchronous()->GetSkeletalMeshComponentByName( BodySkeletalMeshComponentPropertyName );
 	FComponentDataImportSettings BodyDataImportSettings = MetahumanBuilderComponentImportSettingsDataAsset->GetComponentDataImportSettingsForComponentName( BodySkeletalMeshComponentPropertyName );
 
-	UBlueprintDataExtractionEFL::CopyPropertiesFromOneObjectToAnother( BodySkeletalMeshComponent, OwnerBodyComponent, BodyDataImportSettings.PropertiesToNotCopy );
+	UBlueprintDataExtractionFL::CopyPropertiesFromOneObjectToAnother( BodySkeletalMeshComponent, OwnerBodyComponent, BodyDataImportSettings.PropertiesToNotCopy );
 
 	OwnerBodyComponent->UnregisterComponent();
 	OwnerBodyComponent->RegisterComponent();
@@ -230,7 +232,7 @@ void UMetahumanBuilderComponent::InitializeManagedOwnerComponentsFromNamesAndCla
 		}
 
 		FComponentDataImportSettings ComponentDataImportSettings = MetahumanBuilderComponentImportSettingsDataAsset->GetComponentDataImportSettingsForComponentName( ComponentName );
-		UBlueprintDataExtractionEFL::CopyPropertiesFromOneObjectToAnother( ComponentToTakePropertiesFrom,
+		UBlueprintDataExtractionFL::CopyPropertiesFromOneObjectToAnother( ComponentToTakePropertiesFrom,
 		                                                                   CurrentProcessedComponent,
 		                                                                   ComponentDataImportSettings.PropertiesToNotCopy );
 		CurrentProcessedComponent->UnregisterComponent();

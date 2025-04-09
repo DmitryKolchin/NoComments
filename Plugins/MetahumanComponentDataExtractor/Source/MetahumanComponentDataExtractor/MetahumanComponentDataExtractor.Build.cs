@@ -26,11 +26,8 @@ public class MetahumanComponentDataExtractor : ModuleRules
 			new string[]
 			{
 				"Core",
-				"Blutility",
 				"HairStrandsCore",
 				"DeveloperSettings",
-				"EditorFramework",
-				"UnrealEd"
 				// ... add other public dependencies that you statically link with here ...
 			}
 		);
@@ -41,9 +38,6 @@ public class MetahumanComponentDataExtractor : ModuleRules
 			{
 				"Projects",
 				"InputCore",
-				"EditorFramework",
-				"UnrealEd",
-				"ToolMenus",
 				"CoreUObject",
 				"Engine",
 				"Slate",

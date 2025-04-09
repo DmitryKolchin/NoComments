@@ -5,6 +5,7 @@
 #include "CanvasItem.h"
 #include "CanvasTypes.h"
 #include "ObjectTools.h"
+#include "AssetRegistry/AssetRegistryModule.h"
 #include "DataAssets/MetahumanComponentsDataAsset.h"
 
 class UMetahumanComponentsDataAsset;
@@ -86,7 +87,7 @@ const FObjectThumbnail* UMCDEThumbnailRenderer::GetThumbnailForDataAsset(UMetahu
 	// If we don't have a cached thumbnail, but we have a source metahuman blueprint - we ask data asset to update the thumbnail
 	if ( MetahumanComponentsDataAsset->HasSourceMetahumanBlueprint() )
 	{
-		MetahumanComponentsDataAsset->UpdateEmbeddedThumbnail();
+		UpdateEmbeddedThumbnailFromSourceMetahumanBlueprint( MetahumanComponentsDataAsset );
 
 		{
 			//Assert for impossible situation
@@ -127,6 +128,7 @@ UTexture2D* UMCDEThumbnailRenderer::GetThumbnailTextureFromObjectThumbnail(const
 	// Now we can generate the thumbnail texture from the given thumbnail image data
 	UTexture2D* ThumbnailTexture = UTexture2D::CreateTransient( ThumbnailImageWidth, ThumbnailImageHeight, PF_B8G8R8A8 );
 
+
 	{
 		if ( !IsValid( ThumbnailTexture ) )
 		{
@@ -153,4 +155,58 @@ UTexture2D* UMCDEThumbnailRenderer::GetThumbnailTextureFromObjectThumbnail(const
 	ThumbnailTexture->UpdateResource();
 
 	return ThumbnailTexture;
+}
+
+void UMCDEThumbnailRenderer::UpdateEmbeddedThumbnailFromSourceMetahumanBlueprint(UMetahumanComponentsDataAsset* MetahumanComponentsDataAsset)
+{
+	{
+		if ( !IsValid( MetahumanComponentsDataAsset ) )
+		{
+			ensureAlwaysMsgf( false, TEXT( "UMCDEThumbnailRenderer::UpdateEmbeddedThumbnailFromSourceMetahumanBlueprint: MetahumanComponentsDataAsset is not valid." ) );
+			return;
+		}
+	}
+
+	// First of all - clearing the old cached thumbnail
+	ThumbnailTools::CacheEmptyThumbnail( MetahumanComponentsDataAsset->GetFullName(), MetahumanComponentsDataAsset->GetPackage() );
+
+	// This can be if the source metahuman blueprint is not set or cleared
+	if ( !MetahumanComponentsDataAsset->HasSourceMetahumanBlueprint() )
+	{
+		return;
+	}
+
+	// First things first - getting the thumbnail from metahuman blueprint
+	FObjectThumbnail* SourceMetahumanBlueprintThumbnail = ThumbnailTools::GenerateThumbnailForObjectToSaveToDisk( MetahumanComponentsDataAsset->GetSourceMetahumanBlueprint().LoadSynchronous() );
+
+	{
+		if ( !SourceMetahumanBlueprintThumbnail )
+		{
+			ensureAlwaysMsgf( false, TEXT( "UMetahumanComponentsDataAsset::EmbedSourceMetahumanBlueprintThumbnail: SourceMetahumanBlueprintThumbnail is not valid." ) );
+			return;
+		}
+	}
+
+	FObjectThumbnail ThumbnailCopy = *SourceMetahumanBlueprintThumbnail;
+
+	// Now let's embed the thumbnail into the data asset blueprint by adding it to the thumbnail map
+	UPackage* DataAssetPackage = MetahumanComponentsDataAsset->GetPackage();
+	FString DataAssetPackageFullName = DataAssetPackage->GetPathName();
+	FName DataAssetPackageFullNameAsFName = FName( *DataAssetPackageFullName );
+
+	// if there is a thumbnail map, we can set the thumbnail we took from the metahuman blueprint as the thumbnail for the data asset
+	if ( DataAssetPackage->HasThumbnailMap() )
+	{
+		FThumbnailMap& DataAssetThumbnailMap = DataAssetPackage->AccessThumbnailMap();
+		DataAssetThumbnailMap.Add( DataAssetPackageFullNameAsFName, ThumbnailCopy );
+	}
+	// if there is no thumbnail map, we need to create one
+	else
+	{
+		FThumbnailMap DataAssetThumbnailMap;
+		DataAssetThumbnailMap.Add( DataAssetPackageFullNameAsFName, ThumbnailCopy );
+		DataAssetPackage->SetThumbnailMap( MakeUnique<FThumbnailMap>( DataAssetThumbnailMap ) );
+	}
+
+	FAssetRegistryModule::AssetCreated( MetahumanComponentsDataAsset );
 }

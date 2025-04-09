@@ -6,12 +6,11 @@
 #include "Engine/DeveloperSettings.h"
 #include "MetahumanComponentDataExtractorSettings.generated.h"
 
-class UEditorUtilityWidgetBlueprint;
-class UEditorUtilityWidget;
+class UWidgetBlueprint;
 /**
  * 
  */
-UCLASS( Config=Editor, defaultconfig )
+UCLASS(defaultconfig, config = UMetahumanComponentDataExtractor, meta = (DisplayName = "Metahuman Component Data Extractor Settings"))
 class METAHUMANCOMPONENTDATAEXTRACTOR_API UMetahumanComponentDataExtractorSettings : public UDeveloperSettings
 {
 	GENERATED_BODY()
@@ -29,9 +28,6 @@ private:
 	UPROPERTY( Config, EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true") )
 	FName FaceSkeletalMeshComponentPropertyName = "Face";
 
-	UPROPERTY(Config, EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	TSoftObjectPtr<UEditorUtilityWidgetBlueprint> MetahumanComponentDataExtractorWidget;
-
 public:
 	const TArray<FName>& GetSkeletalMeshComponentPropertyNames() const;
 
@@ -40,6 +36,4 @@ public:
 	FName GetBodySkeletalMeshComponentPropertyName() const;
 
 	FName GetFaceSkeletalMeshComponentPropertyName() const;
-
-	TSoftObjectPtr<UEditorUtilityWidgetBlueprint> GetMetahumanComponentDataExtractorWidget() const;
 };

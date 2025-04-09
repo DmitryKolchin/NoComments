@@ -21,8 +21,3 @@ FName UMetahumanComponentDataExtractorSettings::GetFaceSkeletalMeshComponentProp
 {
 	return FaceSkeletalMeshComponentPropertyName;
 }
-
-TSoftObjectPtr<UEditorUtilityWidgetBlueprint> UMetahumanComponentDataExtractorSettings::GetMetahumanComponentDataExtractorWidget() const
-{
-	return MetahumanComponentDataExtractorWidget;
-}
