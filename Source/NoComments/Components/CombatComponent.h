@@ -138,6 +138,8 @@ private:
 
 	void SoftLockOnOpponent();
 
+	void UpdateOwnerControlRotationAfterSoftLock();
+
 	void RestoreStamina();
 
 	void KnockOutOwner();
