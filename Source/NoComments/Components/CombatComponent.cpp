@@ -326,6 +326,9 @@ void UCombatComponent::OnOwnerTakeDamage(AActor* DamagedActor,
 		return;
 	}
 
+	// Track number of attacks taken before block
+	++NumberOfAttackTakenBeforeBlock;
+
 	CurrentHealth -= Damage;
 
 	// Track death
@@ -335,8 +338,20 @@ void UCombatComponent::OnOwnerTakeDamage(AActor* DamagedActor,
 		return;
 	}
 
-	// Track number of attacks taken before block
-	++NumberOfAttackTakenBeforeBlock;
+	APawn* OwnerPawn = Cast<APawn>( GetOwner() );
+
+	{
+		if ( !IsValid( OwnerPawn ) )
+		{
+			UDebugFunctionLibrary::ThrowDebugError( GET_FUNCTION_NAME_STRING(), "OwnerPawn is not valid" );
+			return;
+		}
+	}
+
+	FVector OwnerForwardVector = OwnerPawn->GetActorForwardVector();
+	FVector HitMovementOffset = -OwnerForwardVector * 50;
+	OwnerPawn->AddMovementInput( HitMovementOffset, 100.f );
+
 }
 
 void UCombatComponent::SpawnDamageDealingSphereForAttack(const FAttackData& AttackData)
