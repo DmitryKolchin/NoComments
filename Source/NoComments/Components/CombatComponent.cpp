@@ -326,6 +326,9 @@ void UCombatComponent::OnOwnerTakeDamage(AActor* DamagedActor,
 		return;
 	}
 
+	// Track number of attacks taken before block
+	++NumberOfAttackTakenBeforeBlock;
+
 	CurrentHealth -= Damage;
 
 	// Track death
@@ -335,8 +338,20 @@ void UCombatComponent::OnOwnerTakeDamage(AActor* DamagedActor,
 		return;
 	}
 
-	// Track number of attacks taken before block
-	++NumberOfAttackTakenBeforeBlock;
+	APawn* OwnerPawn = Cast<APawn>( GetOwner() );
+
+	{
+		if ( !IsValid( OwnerPawn ) )
+		{
+			UDebugFunctionLibrary::ThrowDebugError( GET_FUNCTION_NAME_STRING(), "OwnerPawn is not valid" );
+			return;
+		}
+	}
+
+	FVector OwnerForwardVector = OwnerPawn->GetActorForwardVector();
+	FVector HitMovementOffset = -OwnerForwardVector * 50;
+	OwnerPawn->AddMovementInput( HitMovementOffset, 100.f );
+
 }
 
 void UCombatComponent::SpawnDamageDealingSphereForAttack(const FAttackData& AttackData)
@@ -396,9 +411,43 @@ void UCombatComponent::SoftLockOnOpponent()
 
 	FRotator NewOwnerRotation = GetOwner()->GetActorRotation();
 	NewOwnerRotation.Yaw = UKismetMathLibrary::FindLookAtRotation( GetOwner()->GetActorLocation(), Opponent->GetActorLocation() ).Yaw;
-
 	// TODO: Make rotation speed adjustable
 	GetOwner()->SetActorRotation( NewOwnerRotation );
+
+	UpdateOwnerControlRotationAfterSoftLock();
+}
+
+void UCombatComponent::UpdateOwnerControlRotationAfterSoftLock()
+{
+	{
+		if ( !IsValid( GetOwner() ) )
+		{
+			UDebugFunctionLibrary::ThrowDebugError( GET_FUNCTION_NAME_STRING(), "Owner is not valid" );
+			return;
+		}
+	}
+
+	float NewOwnerControlRotationYaw = GetOwner()->GetActorRotation().Yaw;
+
+	APawn* OwnerPawn = Cast<APawn>( GetOwner() );
+
+	{
+		if ( !IsValid( OwnerPawn ) )
+		{
+			UDebugFunctionLibrary::ThrowDebugError( GET_FUNCTION_NAME_STRING(), "OwnerPawn is not valid" );
+			return;
+		}
+
+		if ( !IsValid( OwnerPawn->Controller ) )
+		{
+			UDebugFunctionLibrary::ThrowDebugError( GET_FUNCTION_NAME_STRING(), "OwnerPawn->Controller is not valid" );
+			return;
+		}
+	}
+
+	FRotator NewOwnerControlRotation = OwnerPawn->GetControlRotation();
+	NewOwnerControlRotation.Yaw = NewOwnerControlRotationYaw;
+	OwnerPawn->Controller->SetControlRotation( NewOwnerControlRotation );
 }
 
 void UCombatComponent::RestoreStamina()
