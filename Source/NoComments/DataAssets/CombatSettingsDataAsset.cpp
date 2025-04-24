@@ -50,7 +50,17 @@ float UCombatSettingsDataAsset::GetStaminaAfterAttackRestoreDelay() const
 	return StaminaAfterAttackRestoreDelay;
 }
 
+float UCombatSettingsDataAsset::GetStaminaAfterBlockRestoreDelay() const
+{
+	return StaminaAfterBlockRestoreDelay;
+}
+
 TSoftObjectPtr<UAnimMontage> UCombatSettingsDataAsset::GetKnockoutAnimMontage() const
 {
 	return KnockoutAnimMontage;
+}
+
+UStunAnimationsDataAsset* UCombatSettingsDataAsset::GetStunAnimationsDataAsset() const
+{
+	return StunAnimationsDataAsset;
 }

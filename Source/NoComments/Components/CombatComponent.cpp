@@ -7,6 +7,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "NoComments/DataAssets/CombatSettingsDataAsset.h"
+#include "NoComments/DataAssets/StunAnimationsDataAsset.h"
 #include "NoComments/DataStructures/Structs/AttackData.h"
 #include "NoComments/Utils/Libraries/DebugFunctionLibrary.h"
 #include "NoComments/Utils/Macros/NC_Macro.h"
@@ -162,7 +163,7 @@ bool UCombatComponent::CanPerformGivenAttack(const FAttackData& AttackData) cons
 	return true;
 }
 
-void UCombatComponent::PlayAttackMontage(const FAttackData& AttackData)
+void UCombatComponent::Attack(const FAttackData& AttackData)
 {
 	{
 		if ( !IsValid( AttackData.AttackAnimationMontage.LoadSynchronous() ) )
@@ -191,7 +192,9 @@ void UCombatComponent::PlayAttackMontage(const FAttackData& AttackData)
 		}
 	}
 
-	CurrentStamina -= AttackData.StaminaCost;
+	ActiveAttackData = AttackData;
+
+	CurrentStamina -= ActiveAttackData.StaminaCost;
 	UAnimInstance* OwnerAnimInstance = GetOwnerAnimInstance();
 
 	{
@@ -208,9 +211,7 @@ void UCombatComponent::PlayAttackMontage(const FAttackData& AttackData)
 		OwnerAnimInstance->OnMontageEnded.AddDynamic( this, &UCombatComponent::PerformPostAttackFinishedActions );
 	}
 
-	OwnerAnimInstance->Montage_Play( AttackData.AttackAnimationMontage.LoadSynchronous(), CombatSettings.LoadSynchronous()->GetAttackSpeed() );
-
-	SpawnDamageDealingSphereForAttack( AttackData );
+	OwnerAnimInstance->Montage_Play( ActiveAttackData.AttackAnimationMontage.LoadSynchronous(), CombatSettings.LoadSynchronous()->GetAttackSpeed() );
 
 	if ( CharacterCombatState == ECharacterCombatState::Blocking )
 	{
@@ -315,6 +316,30 @@ void UCombatComponent::PerformPostAttackFinishedActions(UAnimMontage* FinishedAt
 	OnAttackFinished.Broadcast();
 }
 
+void UCombatComponent::PerformPostStunFinishedActions(UAnimMontage* FinishedStunMontage, bool bInterrupted)
+{
+	// Checking if the callback is called for the same stun montage
+	if (FinishedStunMontage != ActiveStunMontage)
+	{
+		return;
+	}
+
+	ActiveStunMontage = nullptr;
+	UAnimInstance* OwnerAnimInstance = GetOwnerAnimInstance();
+
+	{
+		if ( !IsValid( OwnerAnimInstance ) )
+		{
+			UDebugFunctionLibrary::ThrowDebugError( GET_FUNCTION_NAME_STRING(), "OwnerAnimInstance is not valid" );
+			return;
+		}
+	}
+
+	OwnerAnimInstance->OnMontageEnded.RemoveDynamic( this, &UCombatComponent::PerformPostStunFinishedActions );
+	CharacterCombatState = ECharacterCombatState::Idle;
+	OnOwnerStunFinished.Broadcast();
+}
+
 void UCombatComponent::OnOwnerTakeDamage(AActor* DamagedActor,
                                          float Damage,
                                          const class UDamageType* DamageType,
@@ -323,7 +348,11 @@ void UCombatComponent::OnOwnerTakeDamage(AActor* DamagedActor,
 {
 	if ( GetCharacterCombatState() == ECharacterCombatState::Blocking )
 	{
-		return;
+		bool bSuccessfullyBlocked = TryBlockAttack( Damage );
+		if ( bSuccessfullyBlocked )
+		{
+			return;
+		}
 	}
 
 	// Track number of attacks taken before block
@@ -338,6 +367,104 @@ void UCombatComponent::OnOwnerTakeDamage(AActor* DamagedActor,
 		return;
 	}
 
+	FStunAnimationData StunAnimationData = GetStunAnimationDataForDamage( Damage );
+
+	ActiveStunMontage = StunAnimationData.StunAnimation.LoadSynchronous();
+
+	{
+		if ( !IsValid( ActiveStunMontage ) )
+		{
+			UDebugFunctionLibrary::ThrowDebugError( GET_FUNCTION_NAME_STRING(), "ActiveStunMontage is not valid" );
+			return;
+		}
+	}
+
+	UAnimInstance* OwnerAnimInstance = GetOwnerAnimInstance();
+
+	{
+		if ( !IsValid( OwnerAnimInstance ) )
+		{
+			UDebugFunctionLibrary::ThrowDebugError( GET_FUNCTION_NAME_STRING(), "OwnerAnimInstance is not valid" );
+			return;
+		}
+	}
+
+	OwnerAnimInstance->Montage_Play( ActiveStunMontage, StunAnimationData.GetStunAnimationPlayRate() );
+
+	if ( !OwnerAnimInstance->OnMontageEnded.IsAlreadyBound( this, &UCombatComponent::PerformPostStunFinishedActions ) )
+	{
+		OwnerAnimInstance->OnMontageEnded.AddDynamic( this, &UCombatComponent::PerformPostStunFinishedActions );
+	}
+
+	CharacterCombatState = ECharacterCombatState::Stunned;
+
+	UCharacterMovementComponent* OwnerCharacterMovementComponent = GetOwner()->FindComponentByClass<UCharacterMovementComponent>();
+	{
+		if ( !IsValid( OwnerCharacterMovementComponent ) )
+		{
+			UDebugFunctionLibrary::ThrowDebugError( GET_FUNCTION_NAME_STRING(), "OwnerCharacterMovementComponent is not valid" );
+			return;
+		}
+	}
+	ActiveKnockBackTargetTime = StunAnimationData.KnockBackDistance / OwnerCharacterMovementComponent->MaxWalkSpeed;
+	ActiveKnockBackPassedTime = 0.f;
+	AddKnockBackImpulsePerTick();
+}
+
+FStunAnimationData UCombatComponent::GetStunAnimationDataForDamage(float Damage) const
+{
+	UStunAnimationsDataAsset* StunAnimationsDataAsset = CombatSettings.LoadSynchronous()->GetStunAnimationsDataAsset();
+
+	{
+		if ( !IsValid( StunAnimationsDataAsset ) )
+		{
+			UDebugFunctionLibrary::ThrowDebugError( GET_FUNCTION_NAME_STRING(), "StunAnimationsDataAsset is not valid" );
+			return FStunAnimationData{};
+		}
+	}
+
+	// Getting stun animations sorted by the min required damage
+	TArray<FStunAnimationData> StunAnimations = StunAnimationsDataAsset->GetStunAnimations();
+	StunAnimations.Sort( [](const FStunAnimationData& A, const FStunAnimationData& B)
+	{
+		return A.MinDamageRequired < B.MinDamageRequired;
+	} );
+
+	// TODO: Binary search for the first animation that has min damage required less than the damage
+	for ( int32 StunAnimationIndex = 0; StunAnimationIndex < StunAnimations.Num(); ++StunAnimationIndex )
+	{
+		const FStunAnimationData& CurrentStunAnimation = StunAnimations[ StunAnimationIndex ];
+
+		// If we pass the damage check, we can go further
+		if ( CurrentStunAnimation.MinDamageRequired <= Damage )
+		{
+			continue;
+		}
+
+		// If we are here, it means that the damage is less than the minimum damage required for this.
+		if ( StunAnimationIndex == 0 )
+		{
+			// If this is the first animation, we can return it
+			return CurrentStunAnimation;
+		}
+
+		// Otherwise, we can return the previous animation
+		return StunAnimations[ StunAnimationIndex - 1 ];
+	}
+
+	return StunAnimations.Last();
+}
+
+void UCombatComponent::AddKnockBackImpulsePerTick()
+{
+	ActiveKnockBackPassedTime += GetWorld()->GetDeltaSeconds();
+
+	if ( ActiveKnockBackTargetTime <= ActiveKnockBackPassedTime )
+	{
+		// If we are here, it means that the knockback is finished
+		return;
+	}
+
 	APawn* OwnerPawn = Cast<APawn>( GetOwner() );
 
 	{
@@ -348,13 +475,12 @@ void UCombatComponent::OnOwnerTakeDamage(AActor* DamagedActor,
 		}
 	}
 
-	FVector OwnerForwardVector = OwnerPawn->GetActorForwardVector();
-	FVector HitMovementOffset = -OwnerForwardVector * 50;
-	OwnerPawn->AddMovementInput( HitMovementOffset, 100.f );
+	OwnerPawn->AddMovementInput( OwnerPawn->GetActorForwardVector(), -1.f );
 
+	GetWorld()->GetTimerManager().SetTimerForNextTick( this, &UCombatComponent::AddKnockBackImpulsePerTick );
 }
 
-void UCombatComponent::SpawnDamageDealingSphereForAttack(const FAttackData& AttackData)
+void UCombatComponent::SpawnDamageDealingSphereForActiveAttack()
 {
 	UDamageDealingSphereComponent* DamageDealingSphereComponent = NewObject<UDamageDealingSphereComponent>( GetOwner() );
 
@@ -362,12 +488,21 @@ void UCombatComponent::SpawnDamageDealingSphereForAttack(const FAttackData& Atta
 	USkeletalMeshComponent* OwnerSkeletalMeshComponent = GetOwner()->FindComponentByClass<USkeletalMeshComponent>();
 
 	// Setting up the DamageDealingSphereComponent
-	DamageDealingSphereComponent->SetupAttachment( OwnerSkeletalMeshComponent, AttackData.DamageDealingComponentSocketName );
-	DamageDealingSphereComponent->SetDealtDamage( AttackData.DamageDealt );
+	DamageDealingSphereComponent->SetupAttachment( OwnerSkeletalMeshComponent, ActiveAttackData.DamageDealingComponentSocketName );
+	DamageDealingSphereComponent->SetDealtDamage( ActiveAttackData.DamageDealt );
 	DamageDealingSphereComponent->RegisterComponent();
 	DamageDealingSphereComponent->SetRelativeLocation( FVector::ZeroVector );
 	DamageDealingSphereComponent->SetSphereRadius( CombatSettings.LoadSynchronous()->GetDamageDealingSphereRadius(), true );
 	DamageDealingSphereComponent->SetHiddenInGame( !CombatSettings.LoadSynchronous()->ShouldShowDamageDealingSphere() );
+}
+
+void UCombatComponent::RemoveSpawnedDamageDealingSphere()
+{
+	UDamageDealingSphereComponent* OwnerDamageDealingSphereComponent = GetOwner()->GetComponentByClass<UDamageDealingSphereComponent>();
+	if ( IsValid( OwnerDamageDealingSphereComponent ) )
+	{
+		OwnerDamageDealingSphereComponent->DestroyComponent();
+	}
 }
 
 bool UCombatComponent::CanSoftLockOnOpponent() const
@@ -485,5 +620,27 @@ void UCombatComponent::KnockOutOwner()
 
 	GetOwner()->OnTakeAnyDamage.RemoveDynamic( this, &UCombatComponent::OnOwnerTakeDamage );
 	SetComponentTickEnabled( false );
+}
 
+bool UCombatComponent::TryBlockAttack(const float AttackDamage)
+{
+	//Reducing the stamina for the damage taken
+	CurrentStamina -= AttackDamage;
+
+	// Prevent stamina from being restored for a time after blocking an attack
+	if ( StaminaRestoreTimerHandle.IsValid() )
+	{
+		StaminaRestoreTimerHandle.Invalidate();
+	}
+
+	GetWorld()->GetTimerManager().SetTimer( StaminaRestoreTimerHandle,
+	                                        this,
+	                                        &UCombatComponent::RestoreStamina,
+	                                        CombatSettings.LoadSynchronous()->GetStaminaAfterBlockRestoreDelay() );
+
+	// Stamina cannot be less than 0
+	CurrentStamina = FMath::Max( 0.f, CurrentStamina );
+
+	// If stamina is 0, it means we failed to block the attack
+	return 0.f < CurrentStamina;
 }

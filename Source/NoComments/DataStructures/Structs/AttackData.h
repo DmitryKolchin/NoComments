@@ -23,4 +23,6 @@ struct FAttackData
 	/** The stamina cost of this attack */
 	UPROPERTY( EditDefaultsOnly, BlueprintReadWrite, Category="Stamina" )
 	float StaminaCost = 0.0f;
+
+	static FAttackData EmptyAttackData;
 };

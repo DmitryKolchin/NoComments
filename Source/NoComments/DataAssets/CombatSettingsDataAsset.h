@@ -6,6 +6,7 @@
 
 #include "CombatSettingsDataAsset.generated.h"
 
+class UStunAnimationsDataAsset;
 /**
  * 
  */
@@ -27,11 +28,23 @@ private:
 	UPROPERTY( EditDefaultsOnly, Category = "Stamina" )
 	float MaxStamina = 100.f;
 
-	UPROPERTY(EditDefaultsOnly, Category="Stamina")
+	/**
+	 * Speed at which stamina is restored
+	 */
+	UPROPERTY( EditDefaultsOnly, Category="Stamina" )
 	float StaminaRestoreRate = 0.5f;
 
-	UPROPERTY(EditDefaultsOnly, Category="Stamina")
+	/**
+	 * Delay after an attack before stamina starts to restore
+	 */
+	UPROPERTY( EditDefaultsOnly, Category="Stamina" )
 	float StaminaAfterAttackRestoreDelay = 1.0f;
+
+	/**
+	 * Delay after blocking an attack before stamina starts to restore
+	 */
+	UPROPERTY(EditDefaultsOnly, Category = "Stamina")
+	float StaminaAfterBlockRestoreDelay = 0.5f;
 
 	/**
 	 * Distance at which soft lock will be applied
@@ -62,9 +75,15 @@ private:
 	float FightModeWalkSpeed_Default = 300.f;
 
 	/**
+	 * Animation data for stuns
+	 */
+	UPROPERTY( EditDefaultsOnly, Category="Taking Damage|Stun" )
+	TObjectPtr<UStunAnimationsDataAsset> StunAnimationsDataAsset;
+
+	/**
 	 * Animation for knockout
 	 */
-	UPROPERTY(EditDefaultsOnly, Category="Knockout")
+	UPROPERTY( EditDefaultsOnly, Category="Taking Damage|Knockout" )
 	TSoftObjectPtr<UAnimMontage> KnockoutAnimMontage = nullptr;
 
 public:
@@ -99,6 +118,12 @@ public:
 	UPARAM( DisplayName = "Stamina After Attack Restore Delay" ) float GetStaminaAfterAttackRestoreDelay() const;
 
 	UFUNCTION(BlueprintPure)
+	UPARAM( DisplayName = "Stamina After Block Restore Delay" ) float GetStaminaAfterBlockRestoreDelay() const;
+
+	UFUNCTION(BlueprintPure)
 	UPARAM( DisplayName = "Knockout Animation" ) TSoftObjectPtr<UAnimMontage> GetKnockoutAnimMontage() const;
+
+	UFUNCTION(BlueprintPure)
+	UPARAM( DisplayName = "Stun Animations Data Asset" ) UStunAnimationsDataAsset* GetStunAnimationsDataAsset() const;
 
 };

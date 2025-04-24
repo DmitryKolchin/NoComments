@@ -5,8 +5,10 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "NoComments/DataStructures/Enums/CharacterCombatState.h"
+#include "NoComments/DataStructures/Structs/AttackData.h"
 #include "CombatComponent.generated.h"
 
+struct FStunAnimationData;
 struct FAttackData;
 class UCombatSettingsDataAsset;
 
@@ -36,6 +38,9 @@ public:
 	UPROPERTY(BlueprintAssignable)
 	FCombatComponentDelegate OnOwnerKnockedOut;
 
+	UPROPERTY(BlueprintAssignable)
+	FCombatComponentDelegate OnOwnerStunFinished;
+
 private:
 	UPROPERTY( EditDefaultsOnly, Category="Settings" )
 	TSoftObjectPtr<UCombatSettingsDataAsset> CombatSettings = nullptr;
@@ -52,6 +57,9 @@ private:
 	UPROPERTY()
 	float CurrentHealth = 0.0f;
 
+	UPROPERTY()
+	FAttackData ActiveAttackData = FAttackData::EmptyAttackData;
+
 #pragma region STAMINA
 	UPROPERTY()
 	float CurrentStamina = 0.0f;
@@ -61,6 +69,18 @@ private:
 
 	UPROPERTY()
 	float StaminaRestoreAmount = 1.f;
+
+#pragma endregion
+
+#pragma region STUN
+	UPROPERTY()
+	UAnimMontage* ActiveStunMontage = nullptr;
+
+	UPROPERTY()
+	float ActiveKnockBackPassedTime = 0.f;
+
+	UPROPERTY()
+	float ActiveKnockBackTargetTime = 0.f;
 
 #pragma endregion
 
@@ -104,7 +124,15 @@ public:
 
 	// Generic function to play any attack montage
 	UFUNCTION( BlueprintCallable )
-	void PlayAttackMontage(const FAttackData& AttackData);
+	void Attack(const FAttackData& AttackData);
+
+	// Function to be called by the anim notify state to spawn the damage dealing sphere
+	UFUNCTION(BlueprintCallable)
+	void SpawnDamageDealingSphereForActiveAttack();
+
+	// Function to be called by the anim notify state to remove the damage dealing sphere
+	UFUNCTION(BlueprintCallable)
+	void RemoveSpawnedDamageDealingSphere();
 
 private:
 #pragma region WALK SPEED
@@ -126,13 +154,20 @@ private:
 	void PerformPostAttackFinishedActions(UAnimMontage* FinishedAttackMontage, bool bInterrupted);
 
 	UFUNCTION()
+	void PerformPostStunFinishedActions(UAnimMontage* FinishedStunMontage, bool bInterrupted);
+
+	UFUNCTION()
 	void OnOwnerTakeDamage(AActor* DamagedActor,
 	                       float Damage,
 	                       const class UDamageType* DamageType,
 	                       class AController* InstigatedBy,
 	                       AActor* DamageCauser);
 
-	void SpawnDamageDealingSphereForAttack(const FAttackData& AttackData);
+	FStunAnimationData GetStunAnimationDataForDamage(float Damage) const;
+
+	void AddKnockBackImpulsePerTick();
+
+
 
 	bool CanSoftLockOnOpponent() const;
 
@@ -143,4 +178,6 @@ private:
 	void RestoreStamina();
 
 	void KnockOutOwner();
+
+	bool TryBlockAttack(float AttackDamage);
 };
