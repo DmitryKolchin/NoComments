@@ -20,7 +20,8 @@ public class NoComments : ModuleRules
 			"MetaHumanSDKRuntime",
 			"ControlRig",
 			"StateTreeModule",
-			"DeveloperSettings"
+			"DeveloperSettings",
+			"AnimGraphRuntime",
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {});

@@ -10,6 +10,7 @@ void ACrowdAgent::BeginPlay()
 {
 	Super::BeginPlay();
 
+	DisableMotionMatching();
 	GetCharacterMovement()->Deactivate();
 
 	StartLocation = GetActorLocation();

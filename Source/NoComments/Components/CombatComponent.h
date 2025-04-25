@@ -49,8 +49,9 @@ private:
 	AActor* Opponent = nullptr;
 
 	UPROPERTY()
-	ECharacterCombatState CharacterCombatState = ECharacterCombatState::Idle;
+	ECharacterCombatState CharacterCombatState = ECharacterCombatState::NotInCombat;
 
+	// TODO: Probably, should not be here, but given that State Tree can not change it's inner variables, we need to
 	UPROPERTY()
 	int32 NumberOfAttackTakenBeforeBlock = 0;
 

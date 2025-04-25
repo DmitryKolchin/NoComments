@@ -3,9 +3,14 @@
 #include "NCCharacter_Base.h"
 
 #include "GroomBlueprintLibrary.h"
+#include "KismetAnimationLibrary.h"
 #include "Components/LODSyncComponent.h"
 #include "Components/MetahumanBuilderComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "NoComments/Components/NCMetaHumanComponent.h"
+#include "NoComments/Utils/Libraries/DebugFunctionLibrary.h"
+#include "NoComments/Utils/Macros/NC_Macro.h"
 #include "Settings/MetahumanComponentDataExtractorSettings.h"
 
 DEFINE_LOG_CATEGORY( LogNCCharacter_Base );
@@ -16,37 +21,9 @@ ANCCharacter_Base::ANCCharacter_Base()
 	MetaHumanComponent = CreateDefaultSubobject<UNCMetaHumanComponent>( TEXT( "MetaHumanComponent" ) );
 
 	LODSyncComponent = CreateDefaultSubobject<ULODSyncComponent>( TEXT( "LODSyncComponent" ) );
+	SetupLODSyncComponent();
 
-	LODSyncComponent->NumLODs = 3;
-
-	FComponentSync BodySync{FName{"Body"}, ESyncOption::Drive};
-	FComponentSync FaceSync{FName{"Face"}, ESyncOption::Drive};
-	FComponentSync TorsoSync{FName{"Torso"}, ESyncOption::Passive};
-	FComponentSync LegsSync{FName{"Legs"}, ESyncOption::Passive};
-	FComponentSync FeetSync{FName{"Feet"}, ESyncOption::Passive};
-	FComponentSync HairSync{FName{"Hair"}, ESyncOption::Passive};
-	FComponentSync EyebrowsSync{FName{"Eyebrows"}, ESyncOption::Passive};
-	FComponentSync MustacheSync{FName{"Mustache"}, ESyncOption::Passive};
-	FComponentSync BeardSync{FName{"Beard"}, ESyncOption::Passive};
-
-	LODSyncComponent->ComponentsToSync.Add( BodySync );
-	LODSyncComponent->ComponentsToSync.Add( FaceSync );
-	LODSyncComponent->ComponentsToSync.Add( TorsoSync );
-	LODSyncComponent->ComponentsToSync.Add( LegsSync );
-	LODSyncComponent->ComponentsToSync.Add( FeetSync );
-	LODSyncComponent->ComponentsToSync.Add( HairSync );
-	LODSyncComponent->ComponentsToSync.Add( EyebrowsSync );
-	LODSyncComponent->ComponentsToSync.Add( MustacheSync );
-	LODSyncComponent->ComponentsToSync.Add( BeardSync );
-
-	FLODMappingData GroomMappingData;
-	GroomMappingData.Mapping = {3, 5, 7};
-	LODSyncComponent->CustomLODMapping.Add( FName{"Hair"}, GroomMappingData );
-	LODSyncComponent->CustomLODMapping.Add( FName{"Beard"}, GroomMappingData );
-	LODSyncComponent->CustomLODMapping.Add( FName{"Mustache"}, GroomMappingData );
-	LODSyncComponent->CustomLODMapping.Add( FName{"Eyebrows"}, GroomMappingData );
-
-
+	SetupMovementComponent();
 }
 
 void ANCCharacter_Base::PostActorCreated()
@@ -55,7 +32,7 @@ void ANCCharacter_Base::PostActorCreated()
 
 	// No need to do anything if the object is a class default object
 	// This should not be called on CDO, but just in case
-	if (HasAnyFlags( RF_ClassDefaultObject ))
+	if ( HasAnyFlags( RF_ClassDefaultObject ) )
 	{
 		return;
 	}
@@ -69,6 +46,16 @@ void ANCCharacter_Base::PostActorCreated()
 	MetahumanBuilderComponent->InitializeManagedOwnerComponents();
 }
 
+void ANCCharacter_Base::Tick(float DeltaSeconds)
+{
+	Super::Tick( DeltaSeconds );
+	if ( bEnableMotionMatching )
+	{
+		// Update the movement component before motion matching
+		UpdateMovement_PreCMC();
+	}
+}
+
 void ANCCharacter_Base::BeginPlay()
 {
 	Super::BeginPlay();
@@ -78,6 +65,16 @@ void ANCCharacter_Base::BeginPlay()
 UMetahumanBuilderComponent* ANCCharacter_Base::GetMetahumanBuilderComponent() const
 {
 	return MetahumanBuilderComponent;
+}
+
+void ANCCharacter_Base::DisableMotionMatching()
+{
+	bEnableMotionMatching = false;
+}
+
+UCurveFloat* ANCCharacter_Base::GetStrafeSpeedMapCurve() const
+{
+	return StrafeSpeedMapCurve.LoadSynchronous();
 }
 
 void ANCCharacter_Base::SetupHairLOD()
@@ -138,13 +135,102 @@ void ANCCharacter_Base::SetupHairLOD()
 	EyelashesMaterialInstance->SetScalarParameterValue( OpacityRTParameterName, EyelashesHiLODOpacityRTValue );
 }
 
+void ANCCharacter_Base::SetupLODSyncComponent()
+{
+	LODSyncComponent->NumLODs = 3;
+
+	FComponentSync BodySync{FName{"Body"}, ESyncOption::Drive};
+	FComponentSync FaceSync{FName{"Face"}, ESyncOption::Drive};
+	FComponentSync TorsoSync{FName{"Torso"}, ESyncOption::Passive};
+	FComponentSync LegsSync{FName{"Legs"}, ESyncOption::Passive};
+	FComponentSync FeetSync{FName{"Feet"}, ESyncOption::Passive};
+	FComponentSync HairSync{FName{"Hair"}, ESyncOption::Passive};
+	FComponentSync EyebrowsSync{FName{"Eyebrows"}, ESyncOption::Passive};
+	FComponentSync MustacheSync{FName{"Mustache"}, ESyncOption::Passive};
+	FComponentSync BeardSync{FName{"Beard"}, ESyncOption::Passive};
+
+	LODSyncComponent->ComponentsToSync.Add( BodySync );
+	LODSyncComponent->ComponentsToSync.Add( FaceSync );
+	LODSyncComponent->ComponentsToSync.Add( TorsoSync );
+	LODSyncComponent->ComponentsToSync.Add( LegsSync );
+	LODSyncComponent->ComponentsToSync.Add( FeetSync );
+	LODSyncComponent->ComponentsToSync.Add( HairSync );
+	LODSyncComponent->ComponentsToSync.Add( EyebrowsSync );
+	LODSyncComponent->ComponentsToSync.Add( MustacheSync );
+	LODSyncComponent->ComponentsToSync.Add( BeardSync );
+
+	FLODMappingData GroomMappingData;
+	GroomMappingData.Mapping = {3, 5, 7};
+	LODSyncComponent->CustomLODMapping.Add( FName{"Hair"}, GroomMappingData );
+	LODSyncComponent->CustomLODMapping.Add( FName{"Beard"}, GroomMappingData );
+	LODSyncComponent->CustomLODMapping.Add( FName{"Mustache"}, GroomMappingData );
+	LODSyncComponent->CustomLODMapping.Add( FName{"Eyebrows"}, GroomMappingData );
+}
+
+void ANCCharacter_Base::SetupMovementComponent()
+{
+	/* Setting up stuff for motion matching to work */
+	GetCharacterMovement()->MaxAcceleration = 800.f;
+	GetCharacterMovement()->BrakingFrictionFactor = 1.f;
+	GetCharacterMovement()->CrouchedHalfHeight = 60.f;
+
+	// Walking
+	GetCharacterMovement()->GroundFriction = 5.f;
+	GetCharacterMovement()->MaxWalkSpeed = 500.f;
+	GetCharacterMovement()->MinAnalogWalkSpeed = 150.f;
+	GetCharacterMovement()->BrakingDecelerationWalking = 1500.f;
+	GetCharacterMovement()->bCanWalkOffLedgesWhenCrouching = true;
+	GetCharacterMovement()->PerchRadiusThreshold = 20.f;
+	GetCharacterMovement()->bUseFlatBaseForFloorChecks = true;
+
+	//Rotation
+	GetCharacterMovement()->RotationRate = FRotator( 0.f, -1.f, 0.f );
+	GetCharacterMovement()->bUseControllerDesiredRotation = true;
+
+	//Navigation
+	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
+}
+
+void ANCCharacter_Base::UpdateMovement_PreCMC()
+{
+	FVector PendingMovementInputVector = GetCharacterMovement()->GetPendingInputVector();
+	GetCharacterMovement()->BrakingDecelerationWalking = PendingMovementInputVector.IsNearlyZero() ? 500.f : 2000.f;
+
+	GetCharacterMovement()->MaxWalkSpeed = CalculateMaxSpeedFromDirection( WalkSpeeds );
+}
+
+double ANCCharacter_Base::CalculateMaxSpeedFromDirection(const FVector& Speeds) const
+{
+	float StrafeSpeedMap = 0.f;
+	if ( GetCharacterMovement()->bUseControllerDesiredRotation )
+	{
+		if ( !IsValid( GetStrafeSpeedMapCurve() ) )
+		{
+			UDebugFunctionLibrary::ThrowDebugError( GET_FUNCTION_NAME_STRING(), TEXT( "StrafeSpeedMapCurve is not valid!" ) );
+			return 0.f;
+		}
+
+		const FVector CharacterVelocity = GetCharacterMovement()->Velocity;
+		const float CharacterMovementDirection = UKismetAnimationLibrary::CalculateDirection( CharacterVelocity, GetControlRotation() );
+
+		StrafeSpeedMap = GetStrafeSpeedMapCurve()->GetFloatValue( FMath::Abs( CharacterMovementDirection ) );
+	}
+
+	if ( StrafeSpeedMap < 1.f )
+	{
+		return UKismetMathLibrary::MapRangeClamped( StrafeSpeedMap, 0.f, 1.f, Speeds.X, Speeds.Y );
+	}
+
+	return UKismetMathLibrary::MapRangeClamped( StrafeSpeedMap, 1.f, 2.f, Speeds.Y, Speeds.Z );
+}
+
 USkeletalMeshComponent* ANCCharacter_Base::GetFaceSkeletalMeshComponent() const
 {
 	const UMetahumanComponentDataExtractorSettings* MetahumanComponentDataExtractorSettings = GetDefault<UMetahumanComponentDataExtractorSettings>();
 	{
 		if ( !IsValid( MetahumanComponentDataExtractorSettings ) )
 		{
-			ensureAlwaysMsgf( false, TEXT("!IsValid( MetahumanComponentDataExtractorSettings )") );
+			UDebugFunctionLibrary::ThrowDebugError( GET_FUNCTION_NAME_STRING(), TEXT( "!IsValid( MetahumanComponentDataExtractorSettings )" ) );
 			return nullptr;
 		}
 	}

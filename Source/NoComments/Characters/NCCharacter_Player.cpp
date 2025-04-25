@@ -4,8 +4,11 @@
 
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "KismetAnimationLibrary.h"
 #include "Camera/CameraComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "NoComments/Components/CombatComponent.h"
 #include "NoComments/Utils/Libraries/DebugFunctionLibrary.h"
 #include "NoComments/Utils/Macros/NC_Macro.h"
@@ -81,6 +84,11 @@ void ANCCharacter_Player::SetupPlayerInputComponent(UInputComponent* PlayerInput
 void ANCCharacter_Player::Tick(float DeltaSeconds)
 {
 	Super::Tick( DeltaSeconds );
+
+	// Motion matching additional camera settings
+	GetCharacterMovement()->MaxWalkSpeedCrouched = CalculateMaxSpeedFromDirection( CrouchSpeeds );
+
+	// Camera updates
 	if ( !IsValid( CameraComponent ) )
 	{
 		UDebugFunctionLibrary::ThrowDebugError( GET_FUNCTION_NAME_STRING(), TEXT( "CameraComponent is not valid!" ) );

@@ -21,10 +21,12 @@ class NOCOMMENTS_API ANCCharacter_Base : public ACharacter
 public:
 	ANCCharacter_Base();
 
-	void PostActorCreated() override;
+	virtual void PostActorCreated() override;
+
+	virtual void Tick(float DeltaSeconds) override;
 
 protected:
-	void BeginPlay() override;
+	virtual void BeginPlay() override;
 
 private:
 	UPROPERTY( EditDefaultsOnly, Category="Components" )
@@ -43,12 +45,36 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = "Eyelashes")
 	FName EyelashesMaterialSlotName = TEXT("eyelashes_shader_shader");
 
+	UPROPERTY()
+	bool bEnableMotionMatching = true;
+
+	UPROPERTY(EditDefaultsOnly, Category="Walking")
+	TSoftObjectPtr<UCurveFloat> StrafeSpeedMapCurve;
+
+	UPROPERTY(EditDefaultsOnly, Category="Walking")
+	FVector WalkSpeeds = FVector{200.f, 180.f, 150.f};
+
 
 public:
 	UMetahumanBuilderComponent* GetMetahumanBuilderComponent() const;
 
+protected:
+	void DisableMotionMatching();
+
+	UCurveFloat* GetStrafeSpeedMapCurve() const;
+
+	double CalculateMaxSpeedFromDirection(const FVector& Speeds) const;
+
 private:
 	void SetupHairLOD();
+
+	void SetupLODSyncComponent();
+
+	void SetupMovementComponent();
+
+	void UpdateMovement_PreCMC();
+
+
 
 	USkeletalMeshComponent* GetFaceSkeletalMeshComponent() const;
 };

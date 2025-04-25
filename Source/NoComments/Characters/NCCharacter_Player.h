@@ -79,6 +79,9 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category="Input")
 	TObjectPtr<UInputAction> RotateCameraInputAction;
 
+	UPROPERTY(EditDefaultsOnly, Category="Crouching")
+	FVector CrouchSpeeds = FVector{200.f, 180.f, 150.f};
+
 
 
 public:

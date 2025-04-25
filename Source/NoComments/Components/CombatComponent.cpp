@@ -74,6 +74,7 @@ void UCombatComponent::ActivateFightMode(AActor* NewOpponent)
 		}
 	}
 
+	CharacterCombatState = ECharacterCombatState::Idle;
 	Opponent = NewOpponent;
 	SetOwnerWalkSpeed_FightModeDefault();
 }
@@ -562,7 +563,7 @@ void UCombatComponent::UpdateOwnerControlRotationAfterSoftLock()
 		}
 	}
 
-	float NewOwnerControlRotationYaw = GetOwner()->GetActorRotation().Yaw;
+	float NewOwnerControlRotationYaw = UKismetMathLibrary::FindLookAtRotation( GetOwner()->GetActorLocation(), Opponent->GetActorLocation() ).Yaw;
 
 	APawn* OwnerPawn = Cast<APawn>( GetOwner() );
 
