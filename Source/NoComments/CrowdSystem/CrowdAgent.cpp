@@ -3,6 +3,7 @@
 #include "CrowdAgent.h"
 
 #include "GameFramework/CharacterMovementComponent.h"
+#include "NoComments/Components/PreCharacterMovementComponentTickPrerequisiteComponent.h"
 #include "NoComments/Utils/Libraries/DebugFunctionLibrary.h"
 #include "NoComments/Utils/Macros/NC_Macro.h"
 
@@ -11,6 +12,8 @@ void ACrowdAgent::BeginPlay()
 	Super::BeginPlay();
 
 	GetCharacterMovement()->Deactivate();
+	GetCharacterMovement()->SetComponentTickEnabled( false );
+	GetComponentByClass(UPreCharacterMovementComponentTickPrerequisiteComponent::StaticClass())->DestroyComponent();
 
 	StartLocation = GetActorLocation();
 }

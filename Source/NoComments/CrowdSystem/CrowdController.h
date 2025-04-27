@@ -30,11 +30,14 @@ private:
 	UPROPERTY( EditDefaultsOnly )
 	TSubclassOf<ANCCharacter_Base> CrowdAgentClass = ACrowdAgent::StaticClass();
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category="Crowd Settings")
 	int32 AgentsNum = 10;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category="Crowd Settings")
 	float MaxOffset = 100.f;
+
+	UPROPERTY(EditAnywhere, Category="Crowd Settings")
+	float AgentSpawnZOffset = 90.f;
 
 	UPROPERTY(EditAnywhere)
 	TArray<UMetahumanComponentsDataAsset*> CrowdAgentMetaHumanPresets;

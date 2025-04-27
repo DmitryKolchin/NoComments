@@ -27,6 +27,12 @@ void ACrowdController::GenerateCrowd()
 	const float SplineLengthStep = SplineLength / AgentsNum;
 
 	TArray<UMetahumanComponentsDataAsset*> RandomizedPoolOfMetaHumanPresets = GetRandomizedPoolOfMetaHumanPresets();
+	if ( RandomizedPoolOfMetaHumanPresets.IsEmpty() )
+	{
+		UE_LOG( LogTemp, Warning, TEXT( "RandomizedPoolOfMetaHumanPresets is empty" ) );
+		return;
+	}
+
 	for ( int32 AgentIndex = 0; AgentIndex < AgentsNum; ++AgentIndex )
 	{
 		const float CurrentSplineLength = SplineLengthStep * AgentIndex;
@@ -36,7 +42,8 @@ void ACrowdController::GenerateCrowd()
 		const FVector SplineDirection = SplineComponent->GetDirectionAtDistanceAlongSpline( CurrentSplineLength, ESplineCoordinateSpace::World );
 
 		const float SplineDirectionRotationAngle = FMath::RandBool() ? 90.f : -90.f;
-		const FVector Offset = SplineDirection.RotateAngleAxis( SplineDirectionRotationAngle, FVector::UpVector ) * FMath::FRandRange( 0.f, MaxOffset );
+		FVector Offset = SplineDirection.RotateAngleAxis( SplineDirectionRotationAngle, FVector::UpVector ) * FMath::FRandRange( 0.f, MaxOffset );
+		Offset.Z = AgentSpawnZOffset;
 
 		ACrowdAgent* CrowdAgent = GetWorld()->SpawnActor<ACrowdAgent>( CrowdAgentClass, Location + Offset, Rotation );
 
