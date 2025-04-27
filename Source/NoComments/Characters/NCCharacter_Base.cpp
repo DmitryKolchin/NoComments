@@ -46,6 +46,26 @@ void ANCCharacter_Base::PostActorCreated()
 	MetahumanBuilderComponent->InitializeManagedOwnerComponents();
 }
 
+void ANCCharacter_Base::OnConstruction(const FTransform& Transform)
+{
+	Super::OnConstruction( Transform );
+
+	// No need to do anything if the object is a class default object
+	// This should not be called on CDO, but just in case
+	if ( HasAnyFlags( RF_ClassDefaultObject ) )
+	{
+		return;
+	}
+
+	if ( !IsValid( MetahumanBuilderComponent ) )
+	{
+		ensureAlwaysMsgf( false, TEXT( "!IsValid( MetahumanBuilderComponent )" ) );
+		return;
+	}
+
+	MetahumanBuilderComponent->InitializeManagedOwnerComponents();
+}
+
 void ANCCharacter_Base::Tick(float DeltaSeconds)
 {
 	Super::Tick( DeltaSeconds );

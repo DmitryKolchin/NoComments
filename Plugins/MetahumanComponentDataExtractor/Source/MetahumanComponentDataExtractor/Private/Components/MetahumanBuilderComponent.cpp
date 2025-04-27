@@ -270,7 +270,17 @@ USkeletalMeshComponent* UMetahumanBuilderComponent::GetOrCreateOwnerBodyComponen
 
 	if ( ManagedOwnerComponents.Contains( BodySkeletalMeshComponentPropertyName ) )
 	{
-		return Cast<USkeletalMeshComponent>( ManagedOwnerComponents[ MetahumanComponentDataExtractorSettings->GetBodySkeletalMeshComponentPropertyName() ] );
+		// If we have a body, we need to check if it is valid
+		USkeletalMeshComponent* BodySkeletalMeshComponent = Cast<USkeletalMeshComponent>( ManagedOwnerComponents[ BodySkeletalMeshComponentPropertyName ] );
+
+
+		if ( IsValid( BodySkeletalMeshComponent ) )
+        {
+            return BodySkeletalMeshComponent;
+        }
+
+		//If it's invalid, we need to recreate the whole components hierarchy
+		DestroyManagedOwnerComponents();
 	}
 
 	TSet<UActorComponent*> OwnerComponents = GetOwner()->GetComponents();
@@ -344,4 +354,6 @@ void UMetahumanBuilderComponent::DestroyManagedOwnerComponents()
 		}
 		Component->DestroyComponent();
 	}
+
+	ManagedOwnerComponents.Empty(  );
 }

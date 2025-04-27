@@ -23,6 +23,8 @@ public:
 
 	virtual void PostActorCreated() override;
 
+	virtual void OnConstruction(const FTransform& Transform) override;
+
 	virtual void Tick(float DeltaSeconds) override;
 
 protected:
