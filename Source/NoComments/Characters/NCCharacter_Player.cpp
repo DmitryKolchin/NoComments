@@ -85,9 +85,6 @@ void ANCCharacter_Player::Tick(float DeltaSeconds)
 {
 	Super::Tick( DeltaSeconds );
 
-	// Motion matching additional camera settings
-	GetCharacterMovement()->MaxWalkSpeedCrouched = CalculateMaxSpeedFromDirection( CrouchSpeeds );
-
 	// Camera updates
 	if ( !IsValid( CameraComponent ) )
 	{

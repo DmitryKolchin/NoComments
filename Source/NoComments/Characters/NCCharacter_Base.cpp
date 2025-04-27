@@ -9,6 +9,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "NoComments/Components/NCMetaHumanComponent.h"
+#include "NoComments/Components/PreCharacterMovementComponentTickPrerequisiteComponent.h"
 #include "NoComments/Utils/Libraries/DebugFunctionLibrary.h"
 #include "NoComments/Utils/Macros/NC_Macro.h"
 #include "Settings/MetahumanComponentDataExtractorSettings.h"
@@ -17,13 +18,21 @@ DEFINE_LOG_CATEGORY( LogNCCharacter_Base );
 
 ANCCharacter_Base::ANCCharacter_Base()
 {
+	SetupMovementComponent();
+
+	// Metahuman related stuff
 	MetahumanBuilderComponent = CreateDefaultSubobject<UMetahumanBuilderComponent>( TEXT( "MetahumanBuilderComponent" ) );
 	MetaHumanComponent = CreateDefaultSubobject<UNCMetaHumanComponent>( TEXT( "MetaHumanComponent" ) );
 
+	// LODs
 	LODSyncComponent = CreateDefaultSubobject<ULODSyncComponent>( TEXT( "LODSyncComponent" ) );
 	SetupLODSyncComponent();
 
-	SetupMovementComponent();
+	// Motion matching
+	if ( !bDisableMotionMatching )
+	{
+		PreCharacterMovementComponentTickPrerequisiteComponent = CreateDefaultSubobject<UPreCharacterMovementComponentTickPrerequisiteComponent>( TEXT( "PreCharacterMovementComponentTickPrerequisiteComponent" ) );
+	}
 }
 
 void ANCCharacter_Base::PostActorCreated()
@@ -66,35 +75,20 @@ void ANCCharacter_Base::OnConstruction(const FTransform& Transform)
 	MetahumanBuilderComponent->InitializeManagedOwnerComponents();
 }
 
-void ANCCharacter_Base::Tick(float DeltaSeconds)
-{
-	Super::Tick( DeltaSeconds );
-	if ( bEnableMotionMatching )
-	{
-		// Update the movement component before motion matching
-		UpdateMovement_PreCMC();
-	}
-}
-
 void ANCCharacter_Base::BeginPlay()
 {
 	Super::BeginPlay();
 	SetupHairLOD();
+
+	if ( !bDisableMotionMatching )
+	{
+		AddTickPrerequisiteComponent( PreCharacterMovementComponentTickPrerequisiteComponent );
+	}
 }
 
 UMetahumanBuilderComponent* ANCCharacter_Base::GetMetahumanBuilderComponent() const
 {
 	return MetahumanBuilderComponent;
-}
-
-void ANCCharacter_Base::DisableMotionMatching()
-{
-	bEnableMotionMatching = false;
-}
-
-UCurveFloat* ANCCharacter_Base::GetStrafeSpeedMapCurve() const
-{
-	return StrafeSpeedMapCurve.LoadSynchronous();
 }
 
 void ANCCharacter_Base::SetupHairLOD()
@@ -209,39 +203,6 @@ void ANCCharacter_Base::SetupMovementComponent()
 
 	//Navigation
 	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
-}
-
-void ANCCharacter_Base::UpdateMovement_PreCMC()
-{
-	FVector PendingMovementInputVector = GetCharacterMovement()->GetPendingInputVector();
-	GetCharacterMovement()->BrakingDecelerationWalking = PendingMovementInputVector.IsNearlyZero() ? 500.f : 2000.f;
-
-	GetCharacterMovement()->MaxWalkSpeed = CalculateMaxSpeedFromDirection( WalkSpeeds );
-}
-
-double ANCCharacter_Base::CalculateMaxSpeedFromDirection(const FVector& Speeds) const
-{
-	float StrafeSpeedMap = 0.f;
-	if ( GetCharacterMovement()->bUseControllerDesiredRotation )
-	{
-		if ( !IsValid( GetStrafeSpeedMapCurve() ) )
-		{
-			UDebugFunctionLibrary::ThrowDebugError( GET_FUNCTION_NAME_STRING(), TEXT( "StrafeSpeedMapCurve is not valid!" ) );
-			return 0.f;
-		}
-
-		const FVector CharacterVelocity = GetCharacterMovement()->Velocity;
-		const float CharacterMovementDirection = UKismetAnimationLibrary::CalculateDirection( CharacterVelocity, GetControlRotation() );
-
-		StrafeSpeedMap = GetStrafeSpeedMapCurve()->GetFloatValue( FMath::Abs( CharacterMovementDirection ) );
-	}
-
-	if ( StrafeSpeedMap < 1.f )
-	{
-		return UKismetMathLibrary::MapRangeClamped( StrafeSpeedMap, 0.f, 1.f, Speeds.X, Speeds.Y );
-	}
-
-	return UKismetMathLibrary::MapRangeClamped( StrafeSpeedMap, 1.f, 2.f, Speeds.Y, Speeds.Z );
 }
 
 USkeletalMeshComponent* ANCCharacter_Base::GetFaceSkeletalMeshComponent() const

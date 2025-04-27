@@ -23,7 +23,6 @@ class NOCOMMENTS_API ANCCharacter_Player : public ANCCharacter_Base, public IGen
 {
 	GENERATED_BODY()
 
-
 public:
 	ANCCharacter_Player();
 	// IGenericTeamAgentInterface
@@ -43,22 +42,22 @@ protected:
 	virtual void BeginPlay() override;
 
 private:
-	UPROPERTY(EditDefaultsOnly, Category = "Components")
+	UPROPERTY( EditDefaultsOnly, Category = "Components" )
 	UCombatComponent* CombatComponent;
 
-	UPROPERTY(EditDefaultsOnly, Category="Components")
+	UPROPERTY( EditDefaultsOnly, Category="Components" )
 	UCameraComponent* CameraComponent;
 
-	UPROPERTY(EditDefaultsOnly, Category="Components")
+	UPROPERTY( EditDefaultsOnly, Category="Components" )
 	USpringArmComponent* SpringArmComponent;
 
 	UPROPERTY()
 	FGenericTeamId TeamId;
 
-	UPROPERTY(EditDefaultsOnly, Category="Camera")
+	UPROPERTY( EditDefaultsOnly, Category="Camera" )
 	UCameraSettingsDataAsset* CameraSettingsDataAsset;
 
-	UPROPERTY(EditDefaultsOnly, Category="Camera")
+	UPROPERTY( EditDefaultsOnly, Category="Camera" )
 	float CameraTurnRate = 1.f;
 
 	UPROPERTY()
@@ -70,32 +69,27 @@ private:
 	UPROPERTY()
 	float CurrentCameraYawOffset = 0.f;
 
-	UPROPERTY(EditDefaultsOnly, Category="Input")
+	UPROPERTY( EditDefaultsOnly, Category="Input" )
 	const UInputMappingContext* DefaultInputMappingContext;
 
-	UPROPERTY(EditDefaultsOnly, Category="Input")
+	UPROPERTY( EditDefaultsOnly, Category="Input" )
 	TObjectPtr<UInputAction> MoveInputAction;
 
-	UPROPERTY(EditDefaultsOnly, Category="Input")
+	UPROPERTY( EditDefaultsOnly, Category="Input" )
 	TObjectPtr<UInputAction> RotateCameraInputAction;
 
-	UPROPERTY(EditDefaultsOnly, Category="Crouching")
-	FVector CrouchSpeeds = FVector{200.f, 180.f, 150.f};
-
-
-
 public:
-	UFUNCTION(BlueprintPure)
+	UFUNCTION( BlueprintPure )
 	UCombatComponent* GetCombatComponent() const;
 
 protected:
-	UFUNCTION(BlueprintPure)
+	UFUNCTION( BlueprintPure )
 	FCameraSettings GetActiveCameraSettings() const;
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION( BlueprintCallable )
 	void SetFightModeCameraSettings();
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION( BlueprintCallable )
 	void ResetCameraSettingsToDefault();
 
 private:
@@ -104,5 +98,4 @@ private:
 
 	UFUNCTION()
 	void RotateCamera(const FInputActionInstance& Value);
-
 };

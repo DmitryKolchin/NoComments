@@ -10,7 +10,6 @@ void ACrowdAgent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	DisableMotionMatching();
 	GetCharacterMovement()->Deactivate();
 
 	StartLocation = GetActorLocation();
@@ -34,7 +33,7 @@ void ACrowdAgent::ResetVelocity()
 
 void ACrowdAgent::AddNeighbor(ACrowdAgent* Neighbor)
 {
-	if (!IsValid( Neighbor ))
+	if ( !IsValid( Neighbor ) )
 	{
 		UDebugFunctionLibrary::ThrowDebugError( GET_FUNCTION_NAME_STRING(), TEXT( "Neighbor is not valid" ) );
 		return;
