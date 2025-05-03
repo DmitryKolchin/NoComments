@@ -6,6 +6,7 @@
 
 #include "CombatSettingsDataAsset.generated.h"
 
+class UFinisherAnimationsDataAsset;
 class UStunAnimationsDataAsset;
 /**
  * 
@@ -86,6 +87,12 @@ private:
 	UPROPERTY( EditDefaultsOnly, Category="Taking Damage|Knockout" )
 	TSoftObjectPtr<UAnimMontage> KnockoutAnimMontage = nullptr;
 
+	/**
+	 * Finishers animation data
+	 */
+	UPROPERTY(EditDefaultsOnly, Category = "Taking Damage|Finishers")
+	TObjectPtr<UFinisherAnimationsDataAsset> FinishersAnimationsDataAsset;
+
 public:
 	UFUNCTION( BlueprintPure )
 	UPARAM( DisplayName = "Attack Speed" ) float GetAttackSpeed() const;
@@ -125,5 +132,8 @@ public:
 
 	UFUNCTION(BlueprintPure)
 	UPARAM( DisplayName = "Stun Animations Data Asset" ) UStunAnimationsDataAsset* GetStunAnimationsDataAsset() const;
+
+	UFUNCTION(BlueprintPure)
+	UPARAM( DisplayName = "Finishers Animations Data Asset" ) UFinisherAnimationsDataAsset* GetFinishersAnimationsDataAsset() const;
 
 };

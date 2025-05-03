@@ -64,3 +64,8 @@ UStunAnimationsDataAsset* UCombatSettingsDataAsset::GetStunAnimationsDataAsset()
 {
 	return StunAnimationsDataAsset;
 }
+
+UFinisherAnimationsDataAsset* UCombatSettingsDataAsset::GetFinishersAnimationsDataAsset() const
+{
+	return FinishersAnimationsDataAsset;
+}

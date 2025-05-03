@@ -2,11 +2,17 @@
 
 #include "CombatComponent.h"
 
+#include "CineCameraActor.h"
+#include "CineCameraActor.h"
+#include "CineCameraComponent.h"
 #include "DamageDealingSphereComponent.h"
+#include "Algo/RandomShuffle.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "NoComments/DataAssets/CombatSettingsDataAsset.h"
+#include "NoComments/DataAssets/FinisherAnimationsDataAsset.h"
 #include "NoComments/DataAssets/StunAnimationsDataAsset.h"
 #include "NoComments/DataStructures/Structs/AttackData.h"
 #include "NoComments/Utils/Libraries/DebugFunctionLibrary.h"
@@ -28,7 +34,7 @@ void UCombatComponent::BeginPlay()
 	Super::BeginPlay();
 
 	{
-		if (!IsValid( GetOwner() ))
+		if ( !IsValid( GetOwner() ) )
 		{
 			UDebugFunctionLibrary::ThrowDebugError( GET_FUNCTION_NAME_STRING(), "No owner" );
 			return;
@@ -76,6 +82,19 @@ void UCombatComponent::ActivateFightMode(AActor* NewOpponent)
 
 	CharacterCombatState = ECharacterCombatState::Idle;
 	Opponent = NewOpponent;
+
+	UCombatComponent* OpponentCombatComponent = GetOpponentCombatComponent();
+
+	{
+		if ( !IsValid( OpponentCombatComponent ) )
+		{
+			UDebugFunctionLibrary::ThrowDebugError( GET_FUNCTION_NAME_STRING(), "OpponentCombatComponent is not valid" );
+			return;
+		}
+	}
+
+	OpponentCombatComponent->OnOwnerKnockedOut.AddDynamic( this, &UCombatComponent::PlayFinisher );
+
 	SetOwnerWalkSpeed_FightModeDefault();
 }
 
@@ -126,9 +145,8 @@ float UCombatComponent::GetCurrentStamina() const
 
 bool UCombatComponent::CanPerformAnyAttack() const
 {
-
 	// We can not attack when we are knocked out
-	if (CharacterCombatState == ECharacterCombatState::KnockedOut)
+	if ( CharacterCombatState == ECharacterCombatState::KnockedOut )
 	{
 		return false;
 	}
@@ -320,7 +338,7 @@ void UCombatComponent::PerformPostAttackFinishedActions(UAnimMontage* FinishedAt
 void UCombatComponent::PerformPostStunFinishedActions(UAnimMontage* FinishedStunMontage, bool bInterrupted)
 {
 	// Checking if the callback is called for the same stun montage
-	if (FinishedStunMontage != ActiveStunMontage)
+	if ( FinishedStunMontage != ActiveStunMontage )
 	{
 		return;
 	}
@@ -616,7 +634,7 @@ void UCombatComponent::KnockOutOwner()
 
 	CharacterCombatState = ECharacterCombatState::KnockedOut;
 
-	OwnerAnimInstance->Montage_Play( CombatSettings.LoadSynchronous()->GetKnockoutAnimMontage().LoadSynchronous() );
+	//OwnerAnimInstance->Montage_Play( CombatSettings.LoadSynchronous()->GetKnockoutAnimMontage().LoadSynchronous() );
 	OnOwnerKnockedOut.Broadcast();
 
 	GetOwner()->OnTakeAnyDamage.RemoveDynamic( this, &UCombatComponent::OnOwnerTakeDamage );
@@ -644,4 +662,96 @@ bool UCombatComponent::TryBlockAttack(const float AttackDamage)
 
 	// If stamina is 0, it means we failed to block the attack
 	return 0.f < CurrentStamina;
+}
+
+void UCombatComponent::PlayFinisher()
+{
+	UCombatComponent* OpponentCombatComponent = GetOpponentCombatComponent();
+
+	{
+		if ( !IsValid( OpponentCombatComponent ) )
+		{
+			UDebugFunctionLibrary::ThrowDebugError( GET_FUNCTION_NAME_STRING(), "OpponentCombatComponent is not valid" );
+			return;
+		}
+	}
+
+	OpponentCombatComponent->OnOwnerKnockedOut.RemoveDynamic( this, &UCombatComponent::PlayFinisher );
+
+	UFinisherAnimationsDataAsset* FinisherAnimationsDataAsset = CombatSettings.LoadSynchronous()->GetFinishersAnimationsDataAsset();
+
+	{
+		if ( !IsValid( FinisherAnimationsDataAsset ) )
+		{
+			UDebugFunctionLibrary::ThrowDebugError( GET_FUNCTION_NAME_STRING(), "FinisherAnimationsDataAsset is not valid" );
+			return;
+		}
+	}
+
+	FFinisherInfo Finisher = FinisherAnimationsDataAsset->GetRandomFinisher();
+
+	FVector OpponentLocation = GetOwner()->GetActorLocation() + GetOwner()->GetActorForwardVector() * FinisherAnimationsDataAsset->GetDistanceBetweenFighters();
+	FRotator OpponentRotation = GetOwner()->GetActorRotation().Add( 0, 180.f, 0 );
+	Opponent->SetActorLocationAndRotation( OpponentLocation, OpponentRotation );
+
+	GetOwnerAnimInstance()->Montage_Stop( 0, GetOwnerAnimInstance()->GetCurrentActiveMontage() );
+
+	GetOwnerAnimInstance()->OnMontageEnded.AddDynamic( this, &UCombatComponent::OnFinisherFinished );
+
+	GetOwnerAnimInstance()->Montage_Play( Finisher.FinisherAnimation.LoadSynchronous() );
+	ActiveMontage = Finisher.FinisherAnimation.LoadSynchronous();
+
+	OpponentCombatComponent->GetOwnerAnimInstance()->Montage_Play( Finisher.FinisherHitAnimation.LoadSynchronous() );
+
+	TurnOnFinisherCamera();
+
+	OnOwnerFinisherStarted.Broadcast();
+}
+
+void UCombatComponent::OnFinisherFinished(UAnimMontage* FinishedFinisherMontage, bool bInterrupted)
+{
+	if (FinishedFinisherMontage != ActiveMontage)
+	{
+		return;
+	}
+
+	ActiveMontage = nullptr;
+
+	GetOwnerAnimInstance()->OnMontageEnded.RemoveDynamic( this, &UCombatComponent::OnFinisherFinished );
+
+	TurnOffFinisherCamera();
+	OnOwnerFinisherFinished.Broadcast();
+}
+
+void UCombatComponent::TurnOnFinisherCamera()
+{
+	FVector OwnerLocation = GetOwner()->GetActorLocation();
+	FVector GetOpponentLocation = Opponent->GetActorLocation();
+	FVector MidPoint = ( OwnerLocation + GetOpponentLocation ) / 2.f;
+	FVector CameraLocation = MidPoint + GetOwner()->GetActorRightVector() * 150 - GetOwner()->GetActorForwardVector() * 200 + FVector::UpVector * 200;
+	FRotator CameraRotation = UKismetMathLibrary::FindLookAtRotation( CameraLocation, MidPoint );
+
+	ACineCameraActor* CineCameraActor = GetWorld()->SpawnActor<ACineCameraActor>( CameraLocation, CameraRotation );
+	CineCameraActor->GetCineCameraComponent()->SetCurrentFocalLength( 10.831736f );
+
+	UGameplayStatics::GetPlayerController( this, 0 )->SetViewTarget( CineCameraActor );
+
+
+
+}
+
+void UCombatComponent::TurnOffFinisherCamera()
+{
+	UGameplayStatics::GetPlayerController( this, 0 )->SetViewTarget( UGameplayStatics::GetPlayerCharacter( this, 0 ) );
+}
+
+UCombatComponent* UCombatComponent::GetOpponentCombatComponent() const
+{
+	if ( !IsValid( Opponent ) )
+	{
+		UDebugFunctionLibrary::ThrowDebugError( GET_FUNCTION_NAME_STRING(), "Opponent is not valid" );
+		return nullptr;
+	}
+
+	return Cast<UCombatComponent>( Opponent->GetComponentByClass( UCombatComponent::StaticClass() ) );
 }

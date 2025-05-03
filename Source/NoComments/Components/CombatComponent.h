@@ -39,6 +39,12 @@ public:
 	FCombatComponentDelegate OnOwnerKnockedOut;
 
 	UPROPERTY(BlueprintAssignable)
+	FCombatComponentDelegate OnOwnerFinisherStarted;
+
+	UPROPERTY(BlueprintAssignable)
+	FCombatComponentDelegate OnOwnerFinisherFinished;
+
+	UPROPERTY(BlueprintAssignable)
 	FCombatComponentDelegate OnOwnerStunFinished;
 
 private:
@@ -60,6 +66,7 @@ private:
 
 	UPROPERTY()
 	FAttackData ActiveAttackData = FAttackData::EmptyAttackData;
+
 
 #pragma region STAMINA
 	UPROPERTY()
@@ -84,6 +91,10 @@ private:
 	float ActiveKnockBackTargetTime = 0.f;
 
 #pragma endregion
+
+	UPROPERTY()
+	UAnimMontage* ActiveMontage = nullptr;
+
 
 public:
 #pragma region  FIGHT MODE
@@ -181,4 +192,16 @@ private:
 	void KnockOutOwner();
 
 	bool TryBlockAttack(float AttackDamage);
+
+	UFUNCTION()
+	void PlayFinisher();
+
+	UFUNCTION()
+	void OnFinisherFinished(UAnimMontage* FinishedFinisherMontage, bool bInterrupted);
+
+	void TurnOnFinisherCamera();
+
+	void TurnOffFinisherCamera();
+
+	UCombatComponent* GetOpponentCombatComponent() const;
 };
