@@ -22,7 +22,8 @@ public class NoComments : ModuleRules
 			"StateTreeModule",
 			"DeveloperSettings",
 			"AnimGraphRuntime",
-			"CinematicCamera"
+			"CinematicCamera",
+			"UMG"
 		});
 
 		// Uncomment if you are using Slate UI

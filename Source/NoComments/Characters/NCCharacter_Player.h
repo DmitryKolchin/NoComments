@@ -7,8 +7,10 @@
 #include "InputAction.h"
 #include "NCCharacter_Base.h"
 #include "NoComments/DataAssets/CameraSettingsDataAsset.h"
+#include "NoComments/DataStructures/Structs/AttackData.h"
 #include "NCCharacter_Player.generated.h"
 
+struct FAttackData;
 class USpringArmComponent;
 struct FInputActionValue;
 class UCameraComponent;
@@ -78,9 +80,21 @@ private:
 	UPROPERTY( EditDefaultsOnly, Category="Input" )
 	TObjectPtr<UInputAction> RotateCameraInputAction;
 
+	UPROPERTY( EditDefaultsOnly )
+	FAttackData UppercutAttackData;
+
+	UPROPERTY( EditDefaultsOnly )
+	FAttackData PowerPunchAttackData;
+
 public:
 	UFUNCTION( BlueprintPure )
 	UCombatComponent* GetCombatComponent() const;
+
+	UFUNCTION()
+	void Uppercut();
+
+	UFUNCTION()
+	void PowerPunch();
 
 protected:
 	UFUNCTION( BlueprintPure )
@@ -98,4 +112,6 @@ private:
 
 	UFUNCTION()
 	void RotateCamera(const FInputActionInstance& Value);
+
+
 };

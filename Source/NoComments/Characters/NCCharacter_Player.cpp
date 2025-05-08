@@ -195,3 +195,33 @@ void ANCCharacter_Player::RotateCamera(const FInputActionInstance& Value)
 		CurrentCameraPitchOffset += InputDirection.Y * CameraTurnRate;
 	}
 }
+
+void ANCCharacter_Player::Uppercut()
+{
+	if ( !IsValid( CombatComponent ) )
+	{
+		UDebugFunctionLibrary::ThrowDebugError( GET_FUNCTION_NAME_STRING(), TEXT( "CombatComponent is not valid!" ) );
+		return;
+	}
+
+	if ( !CombatComponent->CanPerformGivenAttack( UppercutAttackData ) )
+	{
+		return;
+	}
+
+	CombatComponent->Attack( UppercutAttackData );
+}
+
+void ANCCharacter_Player::PowerPunch()
+{
+	if ( !IsValid( CombatComponent ) )
+	{
+		UDebugFunctionLibrary::ThrowDebugError( GET_FUNCTION_NAME_STRING(), TEXT( "CombatComponent is not valid!" ) );
+		return;
+	}
+	if ( !CombatComponent->CanPerformGivenAttack( PowerPunchAttackData ) )
+	{
+		return;
+	}
+	CombatComponent->Attack( PowerPunchAttackData );
+}
