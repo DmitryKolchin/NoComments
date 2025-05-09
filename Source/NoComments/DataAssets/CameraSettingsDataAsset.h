@@ -16,6 +16,12 @@ struct FCameraSettings
 
 	UPROPERTY( EditDefaultsOnly, BlueprintReadOnly )
 	FFloatRange YawRotationRange;
+
+	UPROPERTY( EditDefaultsOnly, BlueprintReadOnly )
+	bool bIncreaseFOVWhenMoving = false;
+
+	UPROPERTY( EditDefaultsOnly, BlueprintReadOnly, meta = (EditCondition = "bIncreaseFOVWhenMoving") )
+	float FOVIncreaseAmount = 10.0f;
 };
 
 /**
@@ -31,6 +37,7 @@ class NOCOMMENTS_API UCameraSettingsDataAsset : public UDataAsset
 
 	UPROPERTY( EditDefaultsOnly )
 	FCameraSettings FightModeCameraSettings;
+
 
 public:
 	UFUNCTION(BlueprintPure)

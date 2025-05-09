@@ -24,8 +24,6 @@ public:
 
 	virtual void PostActorCreated() override;
 
-	virtual void OnConstruction(const FTransform& Transform) override;
-
 protected:
 	virtual void BeginPlay() override;
 
@@ -39,7 +37,7 @@ private:
 	UPROPERTY( EditDefaultsOnly, Category="Components" )
 	ULODSyncComponent* LODSyncComponent;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Components")
+	UPROPERTY( EditDefaultsOnly, Category = "Components" )
 	UPreCharacterMovementComponentTickPrerequisiteComponent* PreCharacterMovementComponentTickPrerequisiteComponent;
 
 	UPROPERTY( EditDefaultsOnly, Category = "Eyelashes" )
@@ -48,11 +46,12 @@ private:
 	UPROPERTY( EditDefaultsOnly, Category = "Eyelashes" )
 	FName EyelashesMaterialSlotName = TEXT( "eyelashes_shader_shader" );
 
-	UPROPERTY(EditDefaultsOnly, Category = "Motion Matching")
+	UPROPERTY( EditDefaultsOnly, Category = "Motion Matching" )
 	bool bDisableMotionMatching = false;
 
 public:
-	UMetahumanBuilderComponent* GetMetahumanBuilderComponent() const;
+	UFUNCTION(BlueprintPure)
+	UPARAM( DisplayName = "Metahuman Builder Component" )UMetahumanBuilderComponent* GetMetahumanBuilderComponent() const;
 
 private:
 	void SetupHairLOD();

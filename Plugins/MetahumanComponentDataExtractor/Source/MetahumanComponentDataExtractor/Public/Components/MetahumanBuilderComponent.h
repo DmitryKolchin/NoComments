@@ -45,9 +45,12 @@ private:
 	TObjectPtr<UMetahumanBuilderComponentImportSettingsDataAsset> MetahumanBuilderComponentImportSettingsDataAsset;
 
 public:
+	UFUNCTION(BlueprintCallable)
 	void InitializeManagedOwnerComponents();
 
 	void SetMetahumanComponentsDataAsset(UMetahumanComponentsDataAsset* NewMetahumanComponentsDataAsset);
+
+	FName GetBodySkeletalMeshOverrideName() const;
 
 private:
 

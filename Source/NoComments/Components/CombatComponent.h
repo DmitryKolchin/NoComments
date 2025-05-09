@@ -49,6 +49,12 @@ public:
 	UPROPERTY(BlueprintAssignable)
 	FCombatComponentDelegate OnOwnerStunFinished;
 
+	UPROPERTY(BlueprintAssignable)
+	FCombatComponentDelegate OnFightModeActivated;
+
+	UPROPERTY(BlueprintAssignable)
+	FCombatComponentDelegate OnFightModeDeactivated;
+
 private:
 	UPROPERTY( EditDefaultsOnly, Category="Settings" )
 	TSoftObjectPtr<UCombatSettingsDataAsset> CombatSettings = nullptr;

@@ -96,11 +96,15 @@ void UCombatComponent::ActivateFightMode(AActor* NewOpponent)
 	OpponentCombatComponent->OnOwnerKnockedOut.AddDynamic( this, &UCombatComponent::PlayFinisher );
 
 	SetOwnerWalkSpeed_FightModeDefault();
+
+	OnFightModeActivated.Broadcast();
 }
 
 void UCombatComponent::DeactivateFightMode()
 {
 	Opponent = nullptr;
+
+	OnFightModeDeactivated.Broadcast();
 
 	// Let the walk speed change be the responsibility of the caller
 }
@@ -721,6 +725,8 @@ void UCombatComponent::OnFinisherFinished(UAnimMontage* FinishedFinisherMontage,
 
 	TurnOffFinisherCamera();
 	OnOwnerFinisherFinished.Broadcast();
+
+	DeactivateFightMode();
 }
 
 void UCombatComponent::TurnOnFinisherCamera()

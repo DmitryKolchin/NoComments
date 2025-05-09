@@ -106,6 +106,14 @@ protected:
 	UFUNCTION( BlueprintCallable )
 	void ResetCameraSettingsToDefault();
 
+	UFUNCTION(BlueprintImplementableEvent)
+	void SetFOV_Movement();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void SetFOV_Default();
+
+
+
 private:
 	UFUNCTION()
 	void Move(const FInputActionInstance& Value);
