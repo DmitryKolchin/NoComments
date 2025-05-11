@@ -4,11 +4,8 @@
 
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
-#include "KismetAnimationLibrary.h"
 #include "Camera/CameraComponent.h"
-#include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
-#include "Kismet/KismetMathLibrary.h"
 #include "NoComments/Components/CombatComponent.h"
 #include "NoComments/Utils/Libraries/DebugFunctionLibrary.h"
 #include "NoComments/Utils/Macros/NC_Macro.h"
@@ -100,6 +97,18 @@ void ANCCharacter_Player::Tick(float DeltaSeconds)
 	SpringArmComponentRotation.Roll = 0.f;
 
 	SpringArmComponent->SetWorldRotation( SpringArmComponentRotation );
+
+	if ( GetActiveCameraSettings().bIncreaseFOVWhenMoving )
+	{
+		if ( !GetVelocity().IsNearlyZero() )
+		{
+			SetFOV_Movement();
+		}
+		else
+		{
+			SetFOV_Default();
+		}
+	}
 }
 
 void ANCCharacter_Player::BeginPlay()
@@ -111,6 +120,7 @@ void ANCCharacter_Player::BeginPlay()
 		UDebugFunctionLibrary::ThrowDebugError( GET_FUNCTION_NAME_STRING(), TEXT( "CameraSettingsDataAsset is not valid!" ) );
 		return;
 	}
+	ResetCameraSettingsToDefault();
 
 }
 
@@ -165,6 +175,7 @@ void ANCCharacter_Player::Move(const FInputActionInstance& Value)
 
 	FVector MovementDirection = ( RightDirection * InputDirection.X + ForwardDirection * InputDirection.Y ).GetSafeNormal();
 	AddMovementInput( MovementDirection );
+
 }
 
 void ANCCharacter_Player::RotateCamera(const FInputActionInstance& Value)
@@ -194,4 +205,34 @@ void ANCCharacter_Player::RotateCamera(const FInputActionInstance& Value)
 	{
 		CurrentCameraPitchOffset += InputDirection.Y * CameraTurnRate;
 	}
+}
+
+void ANCCharacter_Player::Uppercut()
+{
+	if ( !IsValid( CombatComponent ) )
+	{
+		UDebugFunctionLibrary::ThrowDebugError( GET_FUNCTION_NAME_STRING(), TEXT( "CombatComponent is not valid!" ) );
+		return;
+	}
+
+	if ( !CombatComponent->CanPerformGivenAttack( UppercutAttackData ) )
+	{
+		return;
+	}
+
+	CombatComponent->Attack( UppercutAttackData );
+}
+
+void ANCCharacter_Player::PowerPunch()
+{
+	if ( !IsValid( CombatComponent ) )
+	{
+		UDebugFunctionLibrary::ThrowDebugError( GET_FUNCTION_NAME_STRING(), TEXT( "CombatComponent is not valid!" ) );
+		return;
+	}
+	if ( !CombatComponent->CanPerformGivenAttack( PowerPunchAttackData ) )
+	{
+		return;
+	}
+	CombatComponent->Attack( PowerPunchAttackData );
 }

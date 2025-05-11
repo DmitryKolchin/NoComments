@@ -14,6 +14,8 @@ class UCombatSettingsDataAsset;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE( FCombatComponentDelegate );
 
+//TODO: Move all of this shit to Gameplay Ability System
+
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent), BlueprintType, Blueprintable )
 class NOCOMMENTS_API UCombatComponent : public UActorComponent
 {
@@ -46,6 +48,12 @@ public:
 
 	UPROPERTY(BlueprintAssignable)
 	FCombatComponentDelegate OnOwnerStunFinished;
+
+	UPROPERTY(BlueprintAssignable)
+	FCombatComponentDelegate OnFightModeActivated;
+
+	UPROPERTY(BlueprintAssignable)
+	FCombatComponentDelegate OnFightModeDeactivated;
 
 private:
 	UPROPERTY( EditDefaultsOnly, Category="Settings" )

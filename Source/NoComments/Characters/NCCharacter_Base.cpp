@@ -55,6 +55,7 @@ void ANCCharacter_Base::PostActorCreated()
 	MetahumanBuilderComponent->InitializeManagedOwnerComponents();
 }
 
+/*
 void ANCCharacter_Base::OnConstruction(const FTransform& Transform)
 {
 	Super::OnConstruction( Transform );
@@ -72,9 +73,12 @@ void ANCCharacter_Base::OnConstruction(const FTransform& Transform)
 		return;
 	}
 
+	if (MetahumanBuilderComponent->GetBodySkeletalMeshOverrideName().Compare( NAME_None ))
+
+
 	MetahumanBuilderComponent->InitializeManagedOwnerComponents();
 }
-
+*/
 void ANCCharacter_Base::BeginPlay()
 {
 	Super::BeginPlay();

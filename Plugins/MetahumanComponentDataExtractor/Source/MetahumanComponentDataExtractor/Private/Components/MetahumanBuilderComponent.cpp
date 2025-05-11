@@ -124,6 +124,11 @@ void UMetahumanBuilderComponent::SetMetahumanComponentsDataAsset(UMetahumanCompo
 	InitializeManagedOwnerComponents();
 }
 
+FName UMetahumanBuilderComponent::GetBodySkeletalMeshOverrideName() const
+{
+	return BodySkeletalMeshOverrideName;
+}
+
 void UMetahumanBuilderComponent::InitializeOwnerBodyComponent()
 {
 	{
@@ -314,6 +319,12 @@ USkeletalMeshComponent* UMetahumanBuilderComponent::GetOrCreateOwnerBodyComponen
 		{
 			return OwnerSkeletalMeshComponent;
 		}
+	}
+
+	if (!BodySkeletalMeshOverrideName.IsEqual( NAME_None ))
+	{
+		ensureAlwaysMsgf( false, TEXT( "UMetahumanBuilderComponent::GetOrCreateOwnerBodyComponent: BodySkeletalMeshOverrideName is not equal to NAME_None, but we didn't find the body component." ) );
+		return nullptr;
 	}
 
 	//if we didn't find the body component, we shall create one
