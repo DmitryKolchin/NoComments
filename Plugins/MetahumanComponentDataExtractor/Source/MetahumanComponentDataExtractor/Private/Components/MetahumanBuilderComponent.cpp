@@ -124,9 +124,26 @@ void UMetahumanBuilderComponent::SetMetahumanComponentsDataAsset(UMetahumanCompo
 	InitializeManagedOwnerComponents();
 }
 
+void UMetahumanBuilderComponent::SetMetahumanBuilderComponentImportSettingsDataAsset(UMetahumanBuilderComponentImportSettingsDataAsset* NewMetahumanBuilderComponentImportSettingsDataAsset)
+{
+	{
+		if ( !IsValid( NewMetahumanBuilderComponentImportSettingsDataAsset ) )
+		{
+			ensureAlwaysMsgf( false, TEXT( "UMetahumanBuilderComponent::SetMetahumanBuilderComponentImportSettingsDataAsset: NewMetahumanBuilderComponentImportSettingsDataAsset is not valid." ) );
+			return;
+		}
+	}
+	MetahumanBuilderComponentImportSettingsDataAsset = NewMetahumanBuilderComponentImportSettingsDataAsset;
+}
+
 FName UMetahumanBuilderComponent::GetBodySkeletalMeshOverrideName() const
 {
 	return BodySkeletalMeshOverrideName;
+}
+
+void UMetahumanBuilderComponent::SetBodySkeletalMeshOverrideName(FName NewBodySkeletalMeshOverrideName)
+{
+	BodySkeletalMeshOverrideName = NewBodySkeletalMeshOverrideName;
 }
 
 void UMetahumanBuilderComponent::InitializeOwnerBodyComponent()

@@ -141,6 +141,9 @@ void ANCCharacter_Player::SetFightModeCameraSettings()
 		UDebugFunctionLibrary::ThrowDebugError( GET_FUNCTION_NAME_STRING(), TEXT( "CameraSettingsDataAsset is not valid!" ) );
 		return;
 	}
+	CurrentCameraPitchOffset = 0.f;
+	CurrentCameraYawOffset = 0.f;
+
 	ActiveCameraSettings = CameraSettingsDataAsset->GetFightModeCameraSettings();
 }
 

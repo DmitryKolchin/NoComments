@@ -50,7 +50,11 @@ public:
 
 	void SetMetahumanComponentsDataAsset(UMetahumanComponentsDataAsset* NewMetahumanComponentsDataAsset);
 
+	void SetMetahumanBuilderComponentImportSettingsDataAsset(UMetahumanBuilderComponentImportSettingsDataAsset* NewMetahumanBuilderComponentImportSettingsDataAsset);
+
 	FName GetBodySkeletalMeshOverrideName() const;
+
+	void SetBodySkeletalMeshOverrideName(FName NewBodySkeletalMeshOverrideName);
 
 private:
 
