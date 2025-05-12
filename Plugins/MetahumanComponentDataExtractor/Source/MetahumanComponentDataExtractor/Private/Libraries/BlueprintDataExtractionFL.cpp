@@ -45,6 +45,7 @@ void UBlueprintDataExtractionFL::CopyPropertiesFromOneObjectToAnother(UObject* S
                                                                        UObject* Destination,
                                                                        const TArray<FName>& PropertiesToIgnore)
 {
+
 	for ( TFieldIterator<FProperty> PropertyIterator( Source->GetClass() ); PropertyIterator; ++PropertyIterator )
 	{
 		FProperty* Property = *PropertyIterator;

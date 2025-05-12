@@ -1,4 +1,4 @@
-# Development Commentary Template
+# Final Major Project
 
 ## Project Outline
 
@@ -55,14 +55,65 @@ The hidden stat system is one of the project’s most distinctive features, offe
 
 ---
 
-
-
-
 ## Research
 
-TO BE FILLED LATER
+### Methodology
+
+#### Books
+
+* **Steve McConnell – *Code Complete***
+  This book provides foundational principles of software development that are applicable across all programming domains, including game development. I’ve applied many of its suggestions throughout this project—such as maintaining clean and descriptive variable names, designing simple and intuitive class interfaces, and avoiding overly tight coupling between systems. These best practices significantly improved the readability and maintainability of my code, and likely saved me a considerable amount of debugging time.
+
+#### Technical Documentation
+
+* **[Unreal Engine 5 Documentation](https://dev.epicgames.com/documentation/en-us/unreal-engine/unreal-engine-5-5-documentation)**
+  As the project was built entirely in Unreal Engine 5, the official documentation served as my primary source of technical reference. While not all entries are fully explanatory—many only list function parameters without deeper context—I consistently used it as a starting point. Specific sections, such as the Animation Sharing setup and the comprehensive guide on State Trees, were particularly helpful during development.
+
+#### Talks and Presentations
+
+* **[Maximising Your Game's Performance in Unreal Engine | Unreal Fest 2022](https://www.youtube.com/watch?v=GuIav71867E&t=2184s)**
+  This talk offered a comprehensive overview of profiling tools within Unreal Insights. It aligned well with the optimisation work I undertook during this project, validating many of the techniques I used and helping me improve the overall performance of the game.
+
+* **[State Tree Deep Dive | Unreal Fest 2024](https://www.youtube.com/watch?v=YEmq4kcblj4&t=1807s)**
+  This presentation provided a detailed exploration of the new features in UE5.4 and UE5.5’s State Tree system—particularly considerations, which act as a lightweight built-in utility AI layer. It was especially valuable when implementing more nuanced combat logic and decision-making for AI behaviour.
+
+---
+
+#### Game References
+
+* **Red Dead Redemption 2 – Hand-to-Hand Combat**
+  While Red Dead Redemption 2 doesn’t place a major emphasis on hand-to-hand combat, its basic system (blocking, punching, and cinematic presentation) served as a visual and gameplay reference for us. Our goal was to make a more complex and challenging system inspired by this, incorporating similar core mechanics but allowing both the player and AI to engage in deeper tactical exchanges, such as potential counterattacks.
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/O7KO6Aur0QA?si=oSHNlcw97qgWQzvr" title="YouTube video player" frameborder="0" allowfullscreen></iframe>
+
+*Figure 1. Red Dead Redemption 2 hand-to-hand combat* 
+
+* **Assassin's Creed Shadows – Stealth AI Behaviour**
+  Although Assassin’s Creed Shadows features a significantly more advanced stealth system than what we intended to implement, its NPC behaviours served as a useful benchmark. Key elements we referenced include:
+
+  * Line-of-sight and sound detection, influenced by environmental lighting
+  * Memory of last known player position
+  * Group alert behaviours and escalation
+  * Transition from detection to combat
+    These provided strong guidelines for our own AI stealth logic.
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/iGGFy04r6vs?si=f0Z0x3MKV-6uj5Rz" title="YouTube video player" frameborder="0" allowfullscreen></iframe>
+
+*Figure 2. Assassin's Creed Shadows stealth gameplay*
+
+* **Kingdom Come: Deliverance – Skill Progression System**
+  One of our design goals was to implement a hidden stat-based progression system that subtly adjusts gameplay over time. For instance, favouring combat over stealth would gradually make fights easier as the character's combat proficiency increases. This design is heavily inspired by Kingdom Come: Deliverance, where frequent use of a skill leads to levelling, which in turn unlocks additional capabilities (e.g., brewing potions automatically at high alchemy levels). It’s a great model for encouraging emergent gameplay styles and rewarding player agency.
+
+![](./Referenced%20Games/Skills.jpg)
+*Figure 3. Kingdom Come Deliverance skills*
+
 
 ## Implementation
+
+## Fight Imrpovements
+
+## Motion Matching
+
 
 ## Tools
 
@@ -77,11 +128,13 @@ The *No Comments* project makes extensive use of Epic Games’ **MetaHuman** tec
 - Attempting to integrate these elements into a unified, custom character class requires laborious manual transfer of skeletal mesh components from the MetaHuman Blueprint.
 - Moreover, the rigid structure of the auto-generated Blueprints prevents developers from dynamically assigning MetaHuman assets at runtime, due to hardcoded references.
 
-To address these challenges, I designed and implemented a custom plugin: **Metahuman Data Extractor**.
+To address these challenges, I designed and implemented a custom plugin: **Metahuman Components Data Extractor**.
+![](./MCDE_Images/Plugin%20Overview.png)
+*Figure 4. Metahuman Components Data Extractor Plugin*
 
 ---
 
-### Overview of Functionality
+### Components Data Asset
 
 The plugin’s core component is the `UMetahumanComponentsDataAsset`, a data asset designed to store and manage MetaHuman component data in a modular, runtime-accessible form. Its key elements include:
 
@@ -89,9 +142,68 @@ The plugin’s core component is the `UMetahumanComponentsDataAsset`, a data ass
 - **GroomComponents**: A similar map for hair and facial hair components.
 - **SourceMetahumanBlueprint**: A `TSoftObjectPtr<UBlueprint>` reference pointing to the original MetaHuman Blueprint. As a soft reference, it avoids loading the entire asset into memory unless explicitly needed, which helps optimise performance and reduce memory overhead.
 
-The plugin provides a critical function, `ExtractDataFromMetahumanBlueprint(UObject* Object)`, which automates the process of parsing a provided MetaHuman Blueprint and extracting all relevant components. These are then stored in the data asset for use within a shared custom character class.
+![](./MCDE_Images/DataAssetExample.png)
+*Figure 5. Metahuman Components Data Asset example*
 
----
+The plugin provides a critical function, `ExtractDataFromMetahumanBlueprint()`, which automates the process of parsing a provided MetaHuman Blueprint and extracting all relevant components. These are then stored in the data asset for use within a shared custom character class.
+
+### Metahuman Setup Workflow
+
+To streamline the character setup process and make it more user-friendly, I developed a **custom Editor Utility Widget**. This tool allows you to fully populate the necessary data by simply selecting the appropriate Data Asset and the Metahuman Blueprint imported via the Metahuman system. The widget handles the rest, significantly reducing the manual workload involved in preparing characters.
+
+Once the component data has been exported and stored within the Data Asset, it needs to be applied to the character in-game. This is where the `UMetahumanBuilderComponent` comes into play.
+
+Although the plugin is still in development and currently lacks full polish, it provides the core functionality required for runtime setup. I plan to improve its usability post-submission, but for now, the setup process involves the following steps:
+
+1. **Attach the `UMetahumanBuilderComponent` to your character.**
+
+2. **If no skeletal meshes are assigned**, the component will generate all necessary skeletal meshes from the provided Metahuman data.
+
+3. **If the character has a single skeletal mesh**, it will be used as the main body mesh, while the component attaches all additional skeletal meshes and grooms accordingly.
+
+4. **If the character includes multiple skeletal meshes**, the system will default to using the first mesh returned by the `GetComponents()` call as the body.
+   If a specific mesh needs to be used, you can override it using `SetBodySkeletalMeshOverrideName()` in C++ or by setting the value directly in the Blueprint’s Details panel.
+
+   ![](./MCDE_Images/SkeletalMeshOverride.png)
+   *Figure 6. Body Skeletal Mesh Override field in Blueprint Details panel*
+
+5. **To finalise the build process**, you must call `InitializeManagedOwnerComponents()`.
+   It is strongly recommended to invoke this in the `PostActorCreated()` method. Doing so allows you to set the Data Asset via Blueprint defaults, ensuring the Metahuman is built automatically when the character is placed in the level:
+
+   ```cpp
+   void ANCCharacter_Base::PostActorCreated()
+   {
+       Super::PostActorCreated();
+
+       // Skip execution on the Class Default Object
+       if (HasAnyFlags(RF_ClassDefaultObject))
+       {
+           return;
+       }
+
+       if (!IsValid(MetahumanBuilderComponent))
+       {
+           ensureAlwaysMsgf(false, TEXT("!IsValid(MetahumanBuilderComponent)"));
+           return;
+       }
+
+       MetahumanBuilderComponent->InitializeManagedOwnerComponents();
+   }
+   ```
+
+   *Figure 7. Example of calling `InitializeManagedOwnerComponents()`*
+
+6. **Specify the Import Settings** using a `UMetahumanBuilderComponentImportSettingsDataAsset`.
+   This Data Asset holds override rules for properties that should *not* be copied from the main Data Asset—e.g., the Animation Blueprint, which you may want to maintain separately from the reference data.
+
+   ![](./MCDE_Images/ImportSettingsExample.png)
+   *Figure 8. Example of Import Settings Data Asset*
+
+   The settings asset can be applied using the `SetMetahumanBuilderComponentImportSettingsDataAsset()` function in C++ or configured directly within the Blueprint editor:
+
+   ![](./MCDE_Images/ImportSettingsOverride.png)
+   *Figure 9. Import Settings Data Asset field in Blueprint Details panel*
+
 
 ### Technical Challenges and Solutions
 
@@ -99,7 +211,7 @@ The plugin provides a critical function, `ExtractDataFromMetahumanBlueprint(UObj
 
 One of the main issues encountered during development was the reliance on **hardcoded property names** within the MetaHuman Blueprints. For example, distinguishing the “Face” skeletal mesh from the “Body” mesh is only possible by checking the component's name, which is consistent across MetaHuman imports but not formally exposed or documented.
 
-These string-based identifiers, such as `"Face"`, `"Torso"`, `"Legs"`, and their equivalents for groom components, function as *magic values*—arbitrary constants embedded in code. As McConnell (2004:338) notes, such values represent global data that conceptually applies to the entire application and should be centralised to reduce redundancy and error-proneness.
+These string-based identifiers, such as `"Face"`, `"Torso"`, `"Legs"`, and their equivalents for groom components, function as *magic values*—arbitrary constants embedded in code. As McConnell (2004:338) notes, such values represent global data that conceptually applies to the entire application (in our case, to the entire plugin) and should be centralised to reduce redundancy and error-proneness.
 
 To manage this, I created a subclass of `UDeveloperSettings` called `UMetahumanComponentDataExtractorSettings`. This class provides a centralised configuration for the MetaHuman component names and relevant references:
 
@@ -143,7 +255,73 @@ TArray<FName> SkeletalMeshNames = Settings->GetSkeletalMeshComponentPropertyName
 
 This design enhances maintainability and readability, and ensures consistency across the codebase.
 
+Here's a refined version of that section, keeping your original meaning intact but improving clarity, structure, and grammar for professional development commentary:
 
+---
+
+### Custom Property Data Copy
+
+The default `DuplicateObject` function in Unreal Engine provides no granular control over which properties should or shouldn't be copied. To address this, I implemented a custom copying function that iterates over all `UProperty` fields of a given source object. It skips any properties specified in a list of names to ignore, and performs a manual copy by serialising and deserialising each property:
+
+```cpp
+void UBlueprintDataExtractionFL::CopyPropertiesFromOneObjectToAnother(UObject* Source,
+                                                                       UObject* Destination,
+                                                                       const TArray<FName>& PropertiesToIgnore)
+{
+	for (TFieldIterator<FProperty> PropertyIterator(Source->GetClass()); PropertyIterator; ++PropertyIterator)
+	{
+		FProperty* Property = *PropertyIterator;
+
+		// Only consider properties that are visible and editable in Blueprints
+		if (!Property->HasAnyPropertyFlags(CPF_Edit | CPF_BlueprintVisible))
+		{
+			continue;
+		}
+
+		// Skip properties marked for exclusion
+		if (PropertiesToIgnore.Contains(Property->GetFName()))
+		{
+			continue;
+		}
+
+		// Serialize the property's value from source and import it into destination
+		FString SerializedProperty;
+		Property->ExportTextItem_Direct(SerializedProperty, Property->ContainerPtrToValuePtr<void>(Source), nullptr, Source, PPF_None);
+		Property->ImportText_Direct(*SerializedProperty, Property->ContainerPtrToValuePtr<void>(Destination), Destination, PPF_None);
+	}
+}
+```
+
+This approach gives precise control over property copying, which was especially useful in cases where only a subset of Blueprint-exposed properties should be transferred.
+
+---
+
+### Resolving Packaging Errors
+
+After implementing the full functionality, I encountered a build issue: the plugin failed to package due to a dependency on the `UnrealEd` module, which is editor-only and not compatible with runtime builds. To resolve this, I:
+
+* Moved all editor-related functionality (e.g. Editor Utility Widgets, custom thumbnail logic) into a separate editor-only module.
+* Wrapped all `PostEditChangeProperty()` overrides with `#if !UE_BUILD_SHIPPING` to ensure they are excluded from shipping builds:
+
+```cpp
+#if !UE_BUILD_SHIPPING
+	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
+#endif
+```
+
+These changes allowed the plugin to be successfully included in a packaged build without sacrificing editor utility.
+
+---
+
+### Utility Widget Filtering Limitation
+
+One unresolved issue was filtering the Blueprint selection field in the Editor Utility Widget — specifically the **"Source Metahuman Blueprint"** property. Currently, the property displays all Blueprint assets in the project, which clutters the dropdown with unrelated options:
+
+![Metahuman Blueprint Filtering](./MCDE_Images/MetahumanBlueprintPropertyFiltering.png)
+
+Unfortunately, default editor property customisation does not support filtering UClass asset pickers by inheritance or tags in utility widgets. The only viable solution I found was to write a custom Slate widget to replace the dropdown entirely — a task that exceeded the project's scope and time frame. Research into a more efficient solution is ongoing.
+
+---
 
 
 ### Process
