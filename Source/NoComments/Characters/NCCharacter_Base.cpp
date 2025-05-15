@@ -95,6 +95,11 @@ UMetahumanBuilderComponent* ANCCharacter_Base::GetMetahumanBuilderComponent() co
 	return MetahumanBuilderComponent;
 }
 
+EMotionMatchingGait ANCCharacter_Base::GetMotionMatchingGait() const
+{
+	return MotionMatchingGait;
+}
+
 void ANCCharacter_Base::SetupHairLOD()
 {
 	if ( UGroomBlueprintLibrary::IsHairStrandsSupportedInWorld( this ) )
@@ -241,4 +246,9 @@ USkeletalMeshComponent* ANCCharacter_Base::GetFaceSkeletalMeshComponent() const
 	}
 
 	return nullptr;
+}
+
+void ANCCharacter_Base::SetMotionMatchingGait(EMotionMatchingGait NewGait)
+{
+	MotionMatchingGait = NewGait;
 }

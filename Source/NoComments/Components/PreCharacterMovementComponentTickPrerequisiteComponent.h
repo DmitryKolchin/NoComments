@@ -30,13 +30,14 @@ private:
 	UPROPERTY( EditDefaultsOnly, Category="Walking" )
 	FVector WalkSpeeds = FVector{200.f, 180.f, 150.f};
 
+	UPROPERTY( EditDefaultsOnly, Category="Running" )
+	FVector RunSpeeds = FVector{500.f, 350.f, 300.f};
+
 	UPROPERTY( EditDefaultsOnly, Category="Crouching" )
 	FVector CrouchSpeeds = FVector{200.f, 180.f, 150.f};
 
 private:
 	void UpdateOwnerCharacterMovement();
 
-	double CalculateMaxSpeedFromDirection(UCharacterMovementComponent* OwnerCharacterMovement,
-	                                      const FVector& Speeds,
-	                                      const FRotator& OwnerControlRotation) const;
+	double CalculateMaxSpeedFromDirection(UCharacterMovementComponent* OwnerCharacterMovement, const FVector& Speeds) const;
 };

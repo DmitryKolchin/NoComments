@@ -4,8 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "NoComments/DataStructures/Enums/MotionMatchingGait.h"
 #include "NCCharacter_Base.generated.h"
 
+enum class EMotionMatchingGait : uint8;
 class UPreCharacterMovementComponentTickPrerequisiteComponent;
 class UNCMetaHumanComponent;
 class ULODSyncComponent;
@@ -37,7 +39,7 @@ private:
 	UPROPERTY( EditDefaultsOnly, Category="Components" )
 	ULODSyncComponent* LODSyncComponent;
 
-	UPROPERTY( EditDefaultsOnly, Category = "Components" )
+	UPROPERTY( EditDefaultsOnly, BlueprintReadWrite, meta=(AllowPrivateAccess=true), Category = "Components" )
 	UPreCharacterMovementComponentTickPrerequisiteComponent* PreCharacterMovementComponentTickPrerequisiteComponent;
 
 	UPROPERTY( EditDefaultsOnly, Category = "Eyelashes" )
@@ -49,9 +51,15 @@ private:
 	UPROPERTY( EditDefaultsOnly, Category = "Motion Matching" )
 	bool bDisableMotionMatching = false;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Motion Matching")
+	EMotionMatchingGait MotionMatchingGait = EMotionMatchingGait::Walking;
+
 public:
 	UFUNCTION(BlueprintPure)
 	UPARAM( DisplayName = "Metahuman Builder Component" )UMetahumanBuilderComponent* GetMetahumanBuilderComponent() const;
+
+	UFUNCTION(BlueprintPure)
+	UPARAM( DisplayName = "Gait" )EMotionMatchingGait GetMotionMatchingGait() const;
 
 private:
 	void SetupHairLOD();
@@ -61,4 +69,8 @@ private:
 	void SetupMovementComponent();
 
 	USkeletalMeshComponent* GetFaceSkeletalMeshComponent() const;
+
+protected:
+	UFUNCTION(BlueprintCallable)
+	void SetMotionMatchingGait(EMotionMatchingGait NewGait);
 };

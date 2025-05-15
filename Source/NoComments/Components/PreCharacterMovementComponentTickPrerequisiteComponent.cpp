@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "NoComments/Characters/NCCharacter_Base.h"
 #include "NoComments/Utils/Libraries/DebugFunctionLibrary.h"
 #include "NoComments/Utils/Macros/NC_Macro.h"
 
@@ -15,6 +16,8 @@ UPreCharacterMovementComponentTickPrerequisiteComponent::UPreCharacterMovementCo
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
+
+	SetTickGroup( TG_DuringPhysics );
 
 	// ...
 }
@@ -58,13 +61,32 @@ void UPreCharacterMovementComponentTickPrerequisiteComponent::UpdateOwnerCharact
 	FVector PendingMovementInputVector = OwnerCharacterMovement->GetPendingInputVector();
 	OwnerCharacterMovement->BrakingDecelerationWalking = PendingMovementInputVector.IsNearlyZero() ? 500.f : 2000.f;
 
-	OwnerCharacterMovement->MaxWalkSpeed = CalculateMaxSpeedFromDirection( OwnerCharacterMovement, WalkSpeeds, OwnerCharacter->GetControlRotation() );
-	OwnerCharacterMovement->MaxWalkSpeedCrouched = CalculateMaxSpeedFromDirection( OwnerCharacterMovement, CrouchSpeeds, OwnerCharacter->GetControlRotation() );
+	ANCCharacter_Base* OwnerNCCharacterBase = Cast<ANCCharacter_Base>( OwnerCharacter );
+
+	if ( !IsValid( OwnerNCCharacterBase ) )
+	{
+		UDebugFunctionLibrary::ThrowDebugError( GET_FUNCTION_NAME_STRING(), TEXT( "Owner character must be of type ANCCharacter_Base" ) );
+		return;
+	}
+
+	FVector MovementSpeeds = FVector::ZeroVector;
+	switch ( OwnerNCCharacterBase->GetMotionMatchingGait() )
+	{
+		case EMotionMatchingGait::Walking:
+			MovementSpeeds = WalkSpeeds;
+			break;
+		case EMotionMatchingGait::Running:
+			MovementSpeeds = RunSpeeds;
+			break;
+		case EMotionMatchingGait::None:
+			UDebugFunctionLibrary::ThrowDebugError( GET_FUNCTION_NAME_STRING(), TEXT( "Owner character must have a valid motion matching gait" ) );
+			return;
+	}
+	OwnerCharacterMovement->MaxWalkSpeed = CalculateMaxSpeedFromDirection( OwnerCharacterMovement, MovementSpeeds );
+	OwnerCharacterMovement->MaxWalkSpeedCrouched = CalculateMaxSpeedFromDirection( OwnerCharacterMovement, CrouchSpeeds );
 }
 
-double UPreCharacterMovementComponentTickPrerequisiteComponent::CalculateMaxSpeedFromDirection(UCharacterMovementComponent* OwnerCharacterMovement,
-                                                                                               const FVector& Speeds,
-                                                                                               const FRotator& OwnerControlRotation) const
+double UPreCharacterMovementComponentTickPrerequisiteComponent::CalculateMaxSpeedFromDirection(UCharacterMovementComponent* OwnerCharacterMovement, const FVector& Speeds) const
 {
 	{
 		if ( !IsValid( OwnerCharacterMovement ) )
@@ -89,7 +111,7 @@ double UPreCharacterMovementComponentTickPrerequisiteComponent::CalculateMaxSpee
 		}
 
 		const FVector CharacterVelocity = OwnerCharacterMovement->Velocity;
-		const float CharacterMovementDirection = UKismetAnimationLibrary::CalculateDirection( CharacterVelocity, OwnerControlRotation );
+		const float CharacterMovementDirection = UKismetAnimationLibrary::CalculateDirection( CharacterVelocity, GetOwner()->GetActorRotation() );
 
 		StrafeSpeedMap = StrafeSpeedMapCurve.LoadSynchronous()->GetFloatValue( FMath::Abs( CharacterMovementDirection ) );
 	}

@@ -173,6 +173,9 @@ void ANCCharacter_Player::Move(const FInputActionInstance& Value)
 	}
 
 	FVector InputDirection = Value.GetValue().Get<FVector>();
+	InputDirection.Normalize(  );
+
+
 	FVector RightDirection = CameraComponent->GetRightVector();
 	FVector ForwardDirection = CameraComponent->GetForwardVector() * FVector{1.f, 1.f, 0.f};
 
