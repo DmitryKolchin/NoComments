@@ -100,14 +100,11 @@ void ANCCharacter_Player::Tick(float DeltaSeconds)
 
 	if ( GetActiveCameraSettings().bIncreaseFOVWhenMoving )
 	{
-		if ( !GetVelocity().IsNearlyZero() )
-		{
-			SetFOV_Movement();
-		}
-		else
-		{
-			SetFOV_Default();
-		}
+		CameraComponent->FieldOfView = FMath::FInterpTo( CameraComponent->FieldOfView,
+		                                                        GetFOV(),
+		                                                        DeltaSeconds,
+		                                                        GetActiveCameraSettings().FOVInterpolationSpeed );
+
 	}
 }
 
@@ -210,6 +207,20 @@ void ANCCharacter_Player::RotateCamera(const FInputActionInstance& Value)
 	else
 	{
 		CurrentCameraPitchOffset += InputDirection.Y * CameraTurnRate;
+	}
+}
+
+float ANCCharacter_Player::GetFOV() const
+{
+	if ( !GetVelocity().IsNearlyZero() )
+	{
+		return GetMotionMatchingGait() == EMotionMatchingGait::Walking
+			       ? GetActiveCameraSettings().FOVWalking
+			       : GetActiveCameraSettings().FOVRunning;
+	}
+	else
+	{
+		return GetActiveCameraSettings().FOVIdle;
 	}
 }
 

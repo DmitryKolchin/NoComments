@@ -20,8 +20,17 @@ struct FCameraSettings
 	UPROPERTY( EditDefaultsOnly, BlueprintReadOnly )
 	bool bIncreaseFOVWhenMoving = false;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (EditCondition = "bIncreaseFOVWhenMoving"))
+	float FOVInterpolationSpeed =3.f;
+
 	UPROPERTY( EditDefaultsOnly, BlueprintReadOnly, meta = (EditCondition = "bIncreaseFOVWhenMoving") )
-	float FOVIncreaseAmount = 10.0f;
+	float FOVIdle = 90.f;
+
+	UPROPERTY( EditDefaultsOnly, BlueprintReadOnly, meta = (EditCondition = "bIncreaseFOVWhenMoving") )
+	float FOVWalking = 110.f;
+
+	UPROPERTY( EditDefaultsOnly, BlueprintReadOnly, meta = (EditCondition = "bIncreaseFOVWhenMoving") )
+	float FOVRunning = 140.f;
 };
 
 /**

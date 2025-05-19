@@ -73,13 +73,12 @@ void UMetahumanComponentsDataAsset::ExtractDataFromMetahumanBlueprint(UObject* O
 		{
 			if ( ComponentNameString.StartsWith( SkeletalMeshComponentPropertyName.ToString() ) )
 			{
-				DuplicateObject( SkeletalMeshComponent,
-				                 SkeletalMeshComponents[ SkeletalMeshComponentPropertyName ]);
-				/*
+
+
 				UBlueprintDataExtractionFL::CopyPropertiesFromOneObjectToAnother( SkeletalMeshComponent,
 				                                                                  SkeletalMeshComponents[ SkeletalMeshComponentPropertyName ],
 				                                                                  TArray<FName>{} );
-				                                                                  */
+
 			}
 		}
 
