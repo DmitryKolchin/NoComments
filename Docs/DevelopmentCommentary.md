@@ -95,7 +95,8 @@ We specifically looked to *MGS3* for inspiration regarding enemy AI behaviours. 
 
 While replicating the full complexity of *MGS3*'s AI is beyond the scope of our FMP timeframe, our goal is to capture the foundational behaviours: vision-based detection, sound-based awareness, pursuit logic, and player-search routines. These will form the base of our stealth system and can be expanded in future development.
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/9egLjM139ms?si=nFWp7ozKMZeK7w6Y" title="YouTube video player" frameborder="0" allowfullscreen></iframe>  
+<iframe width="560" height="315" src="https://www.youtube.com/embed/9egLjM139ms?si=nFWp7ozKMZeK7w6Y" title="YouTube video player" frameborder="0" allowfullscreen></iframe> 
+ 
 *Figure 2. Metal Gear Solid 3: Snake Eater – stealth gameplay*
 
 ---

@@ -27,7 +27,7 @@ void UDialogueComponent::PlayCurrentAvailableDialogue()
 	CurrentPhraseIndex = 0;
 
 	DialogueWidget = CreateWidget<UDialogueWidgetBase>( GetWorld(), DialogueWidgetClass );
-	if (!IsValid( DialogueWidget ))
+	if ( !IsValid( DialogueWidget ) )
 	{
 		UDebugFunctionLibrary::ThrowDebugError( GET_FUNCTION_NAME_STRING(), TEXT( "Dialogue widget is not valid." ) );
 		return;
@@ -37,10 +37,6 @@ void UDialogueComponent::PlayCurrentAvailableDialogue()
 	DialogueWidget->AddToViewport();
 
 	PlayNextDialoguePhrase();
-
-
-
-
 }
 
 void UDialogueComponent::SkipCurrentPhrase()
