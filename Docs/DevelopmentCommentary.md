@@ -78,8 +78,9 @@ To inform the gameplay and mechanics of *No Comment*, we studied various critica
 
 While the fights in *Sleeping Dogs* allow the player to defeat multiple enemies with relative ease, our design in *No Comment* aims for a more challenging combat experience early in the game. However, if the player becomes highly skilled in fist fighting through gameplay, we want them to achieve a similarly fluid "free-flow" feel. This aspect is not targeted for the initial FMP submission but is part of our roadmap for post-submission development.
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/jZySMyIsyl8?si=HCfu2cIQvtvD87GO" title="YouTube video player" frameborder="0" allowfullscreen></iframe>  
-*Figure 1. Sleeping Dogs – hand-to-hand combat*
+<iframe height="100%" width="100%" src="https://www.youtube.com/embed/jZySMyIsyl8?si=HCfu2cIQvtvD87GO" title="YouTube video player" frameborder="0" allowfullscreen></iframe>  
+
+*Figure 1. Sleeping Dogs – hand-to-hand combat example*
 
 ---
 
@@ -95,9 +96,9 @@ We specifically looked to *MGS3* for inspiration regarding enemy AI behaviours. 
 
 While replicating the full complexity of *MGS3*'s AI is beyond the scope of our FMP timeframe, our goal is to capture the foundational behaviours: vision-based detection, sound-based awareness, pursuit logic, and player-search routines. These will form the base of our stealth system and can be expanded in future development.
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/9egLjM139ms?si=nFWp7ozKMZeK7w6Y" title="YouTube video player" frameborder="0" allowfullscreen></iframe> 
+<iframe height="100%" width="100%" src="https://www.youtube.com/embed/9egLjM139ms?si=nFWp7ozKMZeK7w6Y" title="YouTube video player" frameborder="0" allowfullscreen></iframe> 
  
-*Figure 2. Metal Gear Solid 3: Snake Eater – stealth gameplay*
+*Figure 2. Metal Gear Solid 3: Snake Eater – complex stealth gameplay*
 
 ---
 
@@ -114,7 +115,7 @@ The game has been praised for this approach, which ties player performance direc
 This philosophy is something we aim to adopt in *No Comment* for long-term development. Instead of arbitrary stat increases, we want progression to be experienced through gameplay itself—encouraging skill mastery and providing meaningful, satisfying feedback to the player.
 
 ![Figure 3. Kingdom Come Deliverance – Skill Tree](./Referenced%20Games/Skills.jpg)
-*Figure 3. Kingdom Come: Deliverance – skill progression*
+*Figure 3. Kingdom Come: Deliverance – vast list of different skills, each of which requires related action to be done more in oreder to progress*
 
 ## Implementation
 
@@ -135,10 +136,10 @@ To address this, I decided to split the logic into two distinct State Trees: one
 Below are visual representations of the updated logic:
 
 ![](./Fight/FightST.png)
-*Figure 4. Fight State Tree*
+*Figure 4. Fight State Tree. Has only action-related logic, like blocks, attacks and taunts. Launches the movement state tree tow work in parallel.*
 
 ![](./Fight/MoveST.png)
-*Figure 5. Move State Tree*
+*Figure 5. Move State Tree. Works in parallelel with the Fight State Tree. Changes the behavior based on the distance to player.*
 
 This refactoring enabled the implementation of more sophisticated and believable enemy behaviour:
 
@@ -148,7 +149,7 @@ This refactoring enabled the implementation of more sophisticated and believable
 The result is a more dynamic and readable fight loop, demonstrated below:
 
 ![](./Fight/Fight.gif)
-*Figure 6. Updated Fight*
+*Figure 6. Updated Fight. AI behavior became more complex compared to the previpus prototype.*
 
 ---
 
@@ -161,8 +162,9 @@ This mechanism enabled more reactive and context-sensitive behaviour. For exampl
 Below is the blueprint logic for this system:
 
 <iframe width=800 height=800 src="https://blueprintue.com/render/2saltplb/" scrolling="no" allowfullscreen></iframe>  
+<iframe height="100%" width="100%" src="https://blueprintue.com/render/2saltplb/" scrolling="no" allowfullscreen></iframe>  
 
-*Figure 7. Consideration System*
+*Figure 7. Consideration. Returns the weight of "Blocking" state based on number of taken hits since previous block. The more hits taken - the more the chance of switching to block.*
 
 This approach brings combat AI closer to player expectations and offers deeper design flexibility for future iterations.
 
@@ -179,9 +181,9 @@ This project provided everything needed:
 The core of this implementation is the Animation Blueprint, which leverages several experimental nodes:
 
 
-<iframe width=800 height=800 src="https://blueprintue.com/render/5gcghn21/" scrolling="no" allowfullscreen></iframe>
+<iframe height="100%" width="100%"  src="https://blueprintue.com/render/5gcghn21/" scrolling="no" allowfullscreen></iframe>
 
-*Figure 7. Pre-montage Locomotion setup*
+*Figure 7. Pre-montage Locomotion setup. Before applying any motages, we need to apply motion matching, additive lean and aim offset.*
 
 **Motion Matching Node:**
 Selects animation frames from a Pose Search Database using a trajectory query. Supports dynamic blend time, database filtering via Choosers, and post-selection adjustments.
@@ -195,8 +197,9 @@ Adds lateral leaning based on acceleration, improving realism during movement.
 **Simple Aim Offset:**
 Makes the character look toward the camera direction with smooth blending using Dead Blending.
 
-<iframe width=800 height=800 src="https://blueprintue.com/render/32qzj0ts/" scrolling="no" allowfullscreen></iframe>
-*Figure 8. Montage blending and post-montage logic*
+<iframe height="100%" width="100%"  src="https://blueprintue.com/render/32qzj0ts/" scrolling="no" allowfullscreen></iframe>
+
+*Figure 8. Montage blending and post-montage logic. After we injected the montage data, we can correct the root bone offset to control the mesh rotation and location, and setup the Foot IK. The final result goes to Pose History node for the Motion Matching to work.*
 
 **Offset Root Bone (Experimental):**
 Offsets the root bone to keep the mesh planted. Helps with rotation and movement alignment but still has limitations (e.g. no collision checks).
@@ -226,12 +229,12 @@ float ANCCharacter_Player::GetFOV() const
 	}
 }
 ```
+*Figure 9. FOV change based on the current character gait and velocity.*
 
 The final result is a much smoother and more reactive animation system:
 
 ![](./MotionMatching/MotionMAtching.gif)
-
-### Crowd 
+*Figure 10. Smooth locomotion and POV blending make the result look more polished.*
 
 ### Metahuman Data Extractor
 
@@ -246,7 +249,7 @@ The *No Comments* project makes extensive use of Epic Games’ **MetaHuman** tec
 
 To address these challenges, I designed and implemented a custom plugin: **Metahuman Components Data Extractor**.
 ![](./MCDE_Images/Plugin%20Overview.png)
-*Figure 4. Metahuman Components Data Extractor Plugin*
+*Figure 11. Metahuman Components Data Extractor Plugin is recognized as a plugin by Unreal Engine and can be disabled in the Plugins settings.*
 
 ---
 
@@ -256,10 +259,10 @@ The plugin’s core component is the `UMetahumanComponentsDataAsset`, a data ass
 
 - **SkeletalMeshComponents**: A map of `FName` to `USkeletalMeshComponent*` that stores labelled skeletal mesh components (e.g., “Face”, “Body”) from the original MetaHuman Blueprint.
 - **GroomComponents**: A similar map for hair and facial hair components.
-- **SourceMetahumanBlueprint**: A `TSoftObjectPtr<UBlueprint>` reference pointing to the original MetaHuman Blueprint. As a soft reference, it avoids loading the entire asset into memory unless explicitly needed, which helps optimise performance and reduce memory overhead.
+- **SourceMetahumanBlueprint**: A `TSoftObjectPtr<UBlueprint>` reference pointing to the original MetaHuman Blueprint. As a soft reference, it avoids loading the entire asset into memory unless explicitly needed, which helps optimise performance and reduce memory overhead. [(Referencing Assets in Unreal Engine | Unreal Engine 5.5 Documentation | Epic Developer Community, s.d.)](https://dev.epicgames.com/documentation/en-us/unreal-engine/referencing-assets-in-unreal-engine)
 
 ![](./MCDE_Images/DataAssetExample.png)
-*Figure 5. Metahuman Components Data Asset example*
+*Figure 12. Metahuman Components Data Asset example*
 
 The plugin provides a critical function, `ExtractDataFromMetahumanBlueprint()`, which automates the process of parsing a provided MetaHuman Blueprint and extracting all relevant components. These are then stored in the data asset for use within a shared custom character class.
 
@@ -268,6 +271,7 @@ The plugin provides a critical function, `ExtractDataFromMetahumanBlueprint()`, 
 To streamline the character setup process and make it more user-friendly, I developed a **custom Editor Utility Widget**. This tool allows you to fully populate the necessary data by simply selecting the appropriate Data Asset and the Metahuman Blueprint imported via the Metahuman system. The widget handles the rest, significantly reducing the manual workload involved in preparing characters.
 
 ![](./MCDE_Images/Extraction.gif)
+*Figure 13. Example of extracting data from Metahuman blueprint via the Editor Utility Widget*
 
 Once the component data has been exported and stored within the Data Asset, it needs to be applied to the character in-game. This is where the `UMetahumanBuilderComponent` comes into play.
 
@@ -283,7 +287,7 @@ Although the plugin is still in development and currently lacks full polish, it 
    If a specific mesh needs to be used, you can override it using `SetBodySkeletalMeshOverrideName()` in C++ or by setting the value directly in the Blueprint’s Details panel.
 
    ![](./MCDE_Images/SkeletalMeshOverride.png)
-   *Figure 6. Body Skeletal Mesh Override field in Blueprint Details panel*
+   *Figure 14. Body Skeletal Mesh Override field in Blueprint Details panel example*
 
 5. **To finalise the build process**, you must call `InitializeManagedOwnerComponents()`.
    It is strongly recommended to invoke this in the `PostActorCreated()` method. Doing so allows you to set the Data Asset via Blueprint defaults, ensuring the Metahuman is built automatically when the character is placed in the level:
@@ -309,18 +313,18 @@ Although the plugin is still in development and currently lacks full polish, it 
    }
    ```
 
-   *Figure 7. Example of calling `InitializeManagedOwnerComponents()`*
+   *Figure 15. Example of calling `InitializeManagedOwnerComponents()` within the PostActorCreated, so the Metahuman could be built in Editor, before runtime.*
 
 6. **Specify the Import Settings** using a `UMetahumanBuilderComponentImportSettingsDataAsset`.
    This Data Asset holds override rules for properties that should *not* be copied from the main Data Asset—e.g., the Animation Blueprint, which you may want to maintain separately from the reference data.
 
    ![](./MCDE_Images/ImportSettingsExample.png)
-   *Figure 8. Example of Import Settings Data Asset*
+   *Figure 16. Example of Import Settings Data Asset with the ```AnimClass``` propertry specified as ignored.*
 
    The settings asset can be applied using the `SetMetahumanBuilderComponentImportSettingsDataAsset()` function in C++ or configured directly within the Blueprint editor:
 
    ![](./MCDE_Images/ImportSettingsOverride.png)
-   *Figure 9. Import Settings Data Asset field in Blueprint Details panel*
+   *Figure 17. Import Settings Data Asset field in Blueprint Details panel*
 
 
 #### Technical Challenges and Solutions
@@ -365,6 +369,7 @@ public:
     TSoftObjectPtr<UBlueprint> GetMetahumanComponentDataExtractorWidget() const;
 };
 ```
+  *Figure 18. Plugin developer settings save all the magic values as variables.*
 
 These values can be accessed in any relevant C++ context as follows:
 
@@ -372,16 +377,15 @@ These values can be accessed in any relevant C++ context as follows:
 const UMetahumanComponentDataExtractorSettings* Settings = GetDefault<UMetahumanComponentDataExtractorSettings>();
 TArray<FName> SkeletalMeshNames = Settings->GetSkeletalMeshComponentPropertyNames();
 ```
+  *Figure 19. Example of getting the settings across the code.*
 
 This design enhances maintainability and readability, and ensures consistency across the codebase.
-
-Here's a refined version of that section, keeping your original meaning intact but improving clarity, structure, and grammar for professional development commentary:
 
 ---
 
 ##### Custom Property Data Copy
 
-The default `DuplicateObject` function in Unreal Engine provides no granular control over which properties should or shouldn't be copied. To address this, I implemented a custom copying function that iterates over all `UProperty` fields of a given source object. It skips any properties specified in a list of names to ignore, and performs a manual copy by serialising and deserialising each property:
+The default `DuplicateObject` function in Unreal Engine provides no granular control over which properties should or shouldn't be copied. Additionally, DuplicateObject sometimes skips properties, changed in Blueprints - there were several occasions when it lost a reference to the Skeletal Mesh while copying. To address those issues, I implemented a custom copying function that iterates over all `UProperty` fields of a given source object. It skips any properties specified in a list of names to ignore, and performs a manual copy by serialising and deserialising each property:
 
 ```cpp
 void UBlueprintDataExtractionFL::CopyPropertiesFromOneObjectToAnother(UObject* Source,
@@ -411,6 +415,7 @@ void UBlueprintDataExtractionFL::CopyPropertiesFromOneObjectToAnother(UObject* S
 	}
 }
 ```
+  *Figure 20. Copying all the propertiers by serializing and immediately deserializing.*
 
 This approach gives precise control over property copying, which was especially useful in cases where only a subset of Blueprint-exposed properties should be transferred.
 
@@ -428,6 +433,7 @@ After implementing the full functionality, I encountered a build issue: the plug
 	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
 #endif
 ```
+*Figure 21. Example of macro-wrapping for logic that is not supposed to go to shipping build.*
 
 These changes allowed the plugin to be successfully included in a packaged build without sacrificing editor utility.
 
@@ -438,52 +444,319 @@ These changes allowed the plugin to be successfully included in a packaged build
 One unresolved issue was filtering the Blueprint selection field in the Editor Utility Widget — specifically the **"Source Metahuman Blueprint"** property. Currently, the property displays all Blueprint assets in the project, which clutters the dropdown with unrelated options:
 
 ![Metahuman Blueprint Filtering](./MCDE_Images/MetahumanBlueprintPropertyFiltering.png)
+*Figure 22. Absolute abscense of any filtering of the searched blueprints.*
 
 Unfortunately, default editor property customisation does not support filtering UClass asset pickers by inheritance or tags in utility widgets. The only viable solution I found was to write a custom Slate widget to replace the dropdown entirely — a task that exceeded the project's scope and time frame. Research into a more efficient solution is ongoing.
 
 ---
 
+### Crowd System Overview
 
-### Process
-- Provide a step-by-step breakdown of your development process, including key milestones and decisions made throughout the project.  
-- Highlight any tools, frameworks, or techniques used, and explain how they contributed to the implementation.  
-- Include screenshots, diagrams, or code snippets where relevant to showcase your progress.
+To enhance the intensity and dynamism of our combat sequence, we implemented a responsive crowd system that reacts to nearby action. For the initial demo, our goal was to have crowd members retreat when either the player or an enemy character comes too close, and return to their original positions once the area is clear. In the future, we plan to expand this behaviour, such as introducing interactions like characters being pushed if they get too close to a crowd member.
 
-### New Approaches  
-- Detail any innovative or new approaches you explored during the project.  
-- Explain why these approaches were chosen and how they differ from standard practices.  
-- Evaluate the success of these approaches, including any challenges faced and lessons learned.
+---
 
-### Testing
-- Document the user testing conducted, specifying the type of tests used (e.g., automated testing, guided user testing, blind testing).  
-- Present feedback or issues identified during testing, using graphs, tables, or visual aids to summarise results.  
-- Describe how these issues were addressed. If any issues were not resolved, provide a clear justification for leaving them unaddressed.
+#### Crowd Agent
 
-### Technical Difficulties
-- Identify any technical difficulties encountered during the implementation phase.  
-- Provide details on how these issues were diagnosed and resolved.  
-- If any difficulties remain unresolved, explain the impact on the project and any mitigation strategies used to minimise their effect.  
-- Reflect on what you would do differently in future projects to avoid similar issues.
+Each crowd agent represents an individual Metahuman-based entity within the crowd. Similar to player and enemy characters, they are assembled using the Metahuman Builder Component. However, Motion Matching is intentionally disabled, as applying it to 20–40 agents simultaneously would introduce significant performance overhead.
+
+Each agent is governed by its own State Tree, which monitors the distance to:
+
+* The player character
+* The enemy character
+* Neighbouring crowd agents
+
+The agent uses this data to determine when to retreat or return based on proximity thresholds.
+<iframe height="100%" width="100%" src="https://blueprintue.com/render/xb4yd8h7/" scrolling="no" allowfullscreen></iframe>
+
+*Figure 23. Blueprint implementation of calculating the repulsion force based on the distance the repelling actor*
+
+---
+
+#### Crowd Manager
+
+Manually placing 20–40 unique Metahuman characters would be inefficient. To address this, I developed a tool to procedurally spawn the crowd using the `GenerateCrowd()` function, which is exposed to the editor via the `CallInEditor` specifier.
+
+The system leverages a pool of Metahuman Data Assets—created using the Metahuman Data Extractor plugin—which are randomly selected and spawned along a spline. This ensures visual variety and avoids placing identical characters adjacent to one another.
+
+```cpp
+void ACrowdController::GenerateCrowd()
+{ 
+    DestroyCreatedAgents();
+
+	if ( !IsValid( GetWorld() ) )
+	{
+		return;
+	}
+
+	const float SplineLength = SplineComponent->GetSplineLength();
+	const float SplineLengthStep = SplineLength / AgentsNum;
+
+	TArray<UMetahumanComponentsDataAsset*> RandomizedPoolOfMetaHumanPresets = GetRandomizedPoolOfMetaHumanPresets();
+	if ( RandomizedPoolOfMetaHumanPresets.IsEmpty() )
+	{
+		UE_LOG( LogTemp, Warning, TEXT( "RandomizedPoolOfMetaHumanPresets is empty" ) );
+		return;
+	}
+
+	for ( int32 AgentIndex = 0; AgentIndex < AgentsNum; ++AgentIndex )
+	{
+		const float CurrentSplineLength = SplineLengthStep * AgentIndex;
+		const FVector Location = SplineComponent->GetLocationAtDistanceAlongSpline( CurrentSplineLength, ESplineCoordinateSpace::World );
+
+		const FRotator Rotation = SplineComponent->GetRotationAtDistanceAlongSpline( CurrentSplineLength, ESplineCoordinateSpace::World );
+		const FVector SplineDirection = SplineComponent->GetDirectionAtDistanceAlongSpline( CurrentSplineLength, ESplineCoordinateSpace::World );
+
+		const float SplineDirectionRotationAngle = FMath::RandBool() ? 90.f : -90.f;
+		FVector Offset = SplineDirection.RotateAngleAxis( SplineDirectionRotationAngle, FVector::UpVector ) * FMath::FRandRange( 0.f, MaxOffset );
+		Offset.Z = AgentSpawnZOffset;
+
+		ACrowdAgent* CrowdAgent = GetWorld()->SpawnActor<ACrowdAgent>( CrowdAgentClass, Location + Offset, Rotation );
+
+		if ( !IsValid( CrowdAgent ) )
+		{
+			continue;
+		}
+
+		UMetahumanComponentsDataAsset* MetaHumanComponentsDataAsset = RandomizedPoolOfMetaHumanPresets.Pop();
+		if ( RandomizedPoolOfMetaHumanPresets.IsEmpty() )
+		{
+			RandomizedPoolOfMetaHumanPresets = GetRandomizedPoolOfMetaHumanPresets();
+		}
+
+		CrowdAgent->GetMetahumanBuilderComponent()->SetMetahumanComponentsDataAsset( MetaHumanComponentsDataAsset );
+
+		CrowdAgent->AttachToActor( this, FAttachmentTransformRules::KeepWorldTransform );
+		CrowdAgents.Add( CrowdAgent );
+
+		if ( CrowdAgents.IsValidIndex( AgentIndex - 1 ) )
+		{
+			ACrowdAgent* PreviousCrowdAgent = CrowdAgents[ AgentIndex - 1 ];
+			CrowdAgent->AddNeighbor( PreviousCrowdAgent );
+			PreviousCrowdAgent->AddNeighbor( CrowdAgent );
+		}
+	}
+
+	if (AgentsNum < 2)
+	{
+		return;
+	}
+
+	ACrowdAgent* FirstCrowdAgent = CrowdAgents[ 0 ];
+	ACrowdAgent* LastCrowdAgent = CrowdAgents.Last();
+	if ( IsValid( FirstCrowdAgent ) && IsValid( LastCrowdAgent ) )
+	{
+		FirstCrowdAgent->AddNeighbor( LastCrowdAgent );
+		LastCrowdAgent->AddNeighbor( FirstCrowdAgent );
+	}
+}
+```
+
+*Figure 24. `GenerateCrowd()` spawns Metahuman agents along a spline, randomly assigning presets to reduce visual repetition.*
+
+Each agent is attached to the manager actor and linked to neighbouring agents to support local awareness in the State Tree. The first and last agents are also linked to form a closed loop for consistent edge behaviour.
+
+---
+
+### Performance Optimisation
+
+Given the scale of the system—20 to 40 animated Metahumans—performance challenges were expected. The following tests were conducted using 40 low-quality Metahumans with simple animation blueprints:
+
+#### Disabling Control Rig
+
+Initial profiling with `stat anim`  [(Stat Commands in Unreal Engine | Unreal Engine 5.5 Documentation | Epic Developer Community, s.d.)](https://dev.epicgames.com/documentation/en-us/unreal-engine/stat-commands-in-unreal-engine) revealed that Control Rig evaluation was a major contributor to animation overhead:
+
+![](./Crowd/ControlRigAnimationStats.png)
+*Figure 25. High-cost Control Rig evaluations identified via animation stats.*
+
+Disabling several options in the Metahuman Component—`Enable Body Correctives`, `Enable Neck Correctives`, and `Enable Neck Proc Control Rig`—resulted in a significant improvement:
+
+![](./Crowd/ControlRigEnabledInsights.png)
+*Figure 26. Median frame time with Control Rig enabled: 18.21 ms*
+
+![](./Crowd/ControlRigDisabledInsights.png)
+*Figure 27. Median frame time with Control Rig disabled: 16.38 ms (\~10% improvement)*
+
+#### Animation Sharing
+
+To further optimise skeletal mesh evaluation, I tested Unreal Engine’s built-in Animation Sharing plugin, designed for crowds  [(Animation Sharing Plugin in Unreal Engine | Unreal Engine 5.5 Documentation | Epic Developer Community, s.d.)](https://dev.epicgames.com/documentation/en-us/unreal-engine/animation-sharing-plugin-in-unreal-engine). While theoretically promising, practical results were disappointing due to inefficient thread synchronisation. Gains from shared pose computation were negated by multithreading contention.
+
+![](./Crowd/NoAnimSharingStats.png)
+*Figure 28. Without animation sharing: 17.46 ms median frame time*
+
+![](./Crowd/AnimSharingStats.png)
+*Figure 29. With animation sharing: 17.11 ms median frame time (\~3% improvement)*
+
+#### Reducing Crowd Size
+
+The most effective optimisation was reducing the number of agents from 40 to 20. This resulted in a stable performance target of 60+ FPS, while still retaining crowd dynamics and variety.
+
+You're welcome! Here's a professional and concise refactoring of your **User Testing** chapter:
+
+
+## User Testing
+
+User testing was conducted in the final development phase, focusing primarily on combat functionality and general user experience. Although the number of testers was limited due to time constraints, the feedback collected provided valuable insights for refinement.
+
+### Feedback Summary
+
+```mermaid
+xychart-beta
+    title "Overall Experience"
+    x-axis "Rating" [1, 2, 3, 4, 5]
+    y-axis "Responses" 0 --> 5
+    bar [0, 0, 1, 3, 0]
+```
+
+*Figure 30. Most players rated the overall experience 4/5, indicating a generally positive reception.*
+
+```mermaid
+xychart-beta
+    title "Exploration Experience"
+    x-axis "Rating" [1, 2, 3, 4, 5]
+    y-axis "Responses" 0 --> 5
+    bar [0, 0, 3, 0, 1]
+```
+
+*Figure 31. Exploration received a mixed response, with the majority rating it 3/5—highlighting a need for improved pacing or environmental interaction.*
+
+```mermaid
+xychart-beta
+    title "Combat Experience"
+    x-axis "Rating" [1, 2, 3, 4, 5]
+    y-axis "Responses" 0 --> 5
+    bar [0, 0, 2, 1, 1]
+```
+
+*Figure 32. Combat was mostly rated 3/5, suggesting it was functional but still lacked polish or responsiveness in some areas.*
+
+```mermaid
+pie title Fight Outcome
+    "No" : 3
+    "Yes" : 4
+```
+
+*Figure 33. Nearly half of the testers won the fight, reflecting a reasonable level of difficulty and a balanced combat design.*
+
+
+### Identified Issues
+
+* Player character becoming invisible after NPC interaction – *Resolved*
+* Crash when skipping dialogue – *Resolved*
+* Both player and enemy playing the same knockout animation – *Fix in progress*
+* Ground decals projecting over the player character – *Assigned to environment artist*
+
+---
+
+### Feedback-Driven Changes
+
+* *“No sprinting so exploration is slow.”* → Sprinting functionality implemented.
+* *“Combat doesn’t have much feedback (i.e. no rumble or particle effects).”* → Visual/audio feedback effects are being added.
+* *“Enemy can stunlock you without a chance to block or evade.”* → AI response logic rebalanced to reduce stunlocking.
+* *“Dialogue moves too quickly.”* → Dialogue pacing adjustments are underway.
+* *“Would like a dodge or escape mechanic.”* → Dash prototypes are being explored, pending design review.
+
+---
+
+Let me know if you'd like this adapted into a slide deck format or presented as a testing report for documentation purposes.
+
+
 
 ## Outcomes
-
 TO BE FILLED LATER
 
 
 
 ## Reflection
-TO BE FILLED LATER
+
+### Research Effectiveness
+
+* **Code Complete by Steve McConnell** provided a strong foundation for clean and maintainable architecture. Its emphasis on separating concerns directly influenced my decision to split combat and movement logic into separate State Trees.
+
+* **Epic Games Documentation and Unreal Fest talks** were invaluable for up-to-date engine knowledge. Features like State Tree Considerations and Motion Matching were implemented based on insights from these sources, avoiding pitfalls from outdated third-party tutorials.
+
+* **Game references** such as *Sleeping Dogs*, *Metal Gear Solid 3*, and *Kingdom Come: Deliverance* shaped core gameplay philosophies—from combat pacing to stealth AI to stat progression based on repeated actions.
+
+Together, these sources helped ensure the project remained both technically robust and design-driven.
+
+---
+
+### What Went Well
+
+* **Most Polished Prototype Yet**: This is by far the most complete and visually refined prototype I’ve developed. Motion Matching significantly improved animation quality, while State Tree logic added a layer of intelligence and nuance to AI behaviours. The combat system was functional and enjoyable, receiving largely positive feedback from playtesters.
+
+* **First-Hand Motion Matching Experience**: Implementing Epic’s Motion Matching system gave me invaluable insight into advanced animation workflows. I now have a reusable template that can be applied to future third-person action projects, especially with the added flexibility of the Retargeter system.
+
+* **Improved AI Design Skills**: My understanding of Unreal Engine’s State Tree system deepened considerably. I can now confidently build modular AI logic that is easier to test, extend, and maintain.
+
+* **Tool Development Experience**: Building the Metahuman Data Extraction plugin was a valuable experience in tools programming. The plugin is already functional and could potentially be polished for distribution on the Unreal Marketplace.
+
+* **Performance Profiling Practice**: I conducted extensive performance testing and gained a stronger grasp of optimisation techniques. Each project sharpens my ability to identify bottlenecks and implement efficient solutions.
+
+### What Could Have Gone Better
+
+* **Limited Stealth Progress**: Most of my focus went into the fighting system, crowd optimisation, and plugin development, leaving stealth systems underdeveloped.
+
+* **Late Testing Phase**: The project reached a testable state quite late in the process, which limited the number and breadth of playtesting sessions. More iterative testing could have identified issues earlier.
+
+* **Dialogue System Polish**: NPC conversations still lack important polish elements such as voice cues and facial animations, which impacts narrative immersion.
+
+* **Combat System Should Use GAS**: Much of the combat logic is currently handled by a custom component. In hindsight, implementing this system through Unreal’s Gameplay Ability System would have provided a more flexible and scalable foundation.
+
+* **Team Communication & Planning**: Project management was not as structured as it could have been. A dedicated producer or project manager role would have helped improve scheduling and coordination across team members.
+
+
+### Next Time
+
+* **Better Project Scaling**: The original scope was too ambitious for a two-person team given the available time. In future projects, I will either reduce the scope or expand the team accordingly.
+
+* **Project Management Focus**: If working in a small team again without a dedicated manager, I’ll take on more proactive planning duties to maintain momentum and alignment.
+
+* **Earlier Playtesting**: I’ll prioritise getting the core gameplay loop testable as early as possible to allow time for meaningful feedback and iteration.
+
+
+
+
+
 
 ## Bibliography  
+- 20 best stealth games ever made (2025) At: https://www.dexerto.com/gaming/best-stealth-games-3052750/ (Accessed  17/05/2025).
+Agostini, D. (2017) Book Review: Code Complete 2. At: https://agostini.tech/2017/05/08/book-review-code-complete-2/ (Accessed  17/05/2025).
+- Animation Sharing Plugin in Unreal Engine | Unreal Engine 5.5 Documentation | Epic Developer Community (s.d.) At: https://dev.epicgames.com/documentation/en-us/unreal-engine/animation-sharing-plugin-in-unreal-engine (Accessed  21/05/2025).
+- Campos, R. (2024) Code Complete 2nd Edition Review. At: https://medium.com/@rodolfocampos459/code-complete-2nd-edition-review-e3e087591355 (Accessed  17/05/2025).
+- Can we start cracking down on people who leave old outdated tutorials - General / Feedback & Requests (2020) At: https://forums.unrealengine.com/t/can-we-start-cracking-down-on-people-who-leave-old-outdated-tutorials/147658 (Accessed  17/05/2025).
+- Christophe (2020) Answer to ‘Why are magic numbers bad practice?’ At: https://softwareengineering.stackexchange.com/a/411213 (Accessed  18/05/2025).
+- Dynamic Asset Selection in Unreal Engine | Unreal Engine 5.5 Documentation | Epic Developer Community (s.d.) At: https://dev.epicgames.com/documentation/en-us/unreal-engine/dynamic-asset-selection-in-unreal-engine (Accessed  09/04/2025).
+- Game Animation Sample Project in Unreal Engine | Unreal Engine 5.5 Documentation | Epic Developer Community (s.d.) At: https://dev.epicgames.com/documentation/en-us/unreal-engine/game-animation-sample-project-in-unreal-engine (Accessed  18/05/2025).
+- Henry, C. (2022) Ranking the 9 best stealth games. At: https://www.polygon.com/what-to-play/23361626/best-stealth-video-games-metal-gear-solid-splinter-cell-ps4-ps5-xbox-one-series-x (Accessed  17/05/2025).
+- Kingdom Come: Deliverance – Royal Edition Review – Gamecritics.com (s.d.) At: https://gamecritics.com/gc-staff/kingdom-come-deliverance-royal-edition-review/ (Accessed  17/05/2025).
+- Maximizing Your Game’s Performance in Unreal Engine | Unreal Fest 2022 (2022) At: https://www.youtube.com/watch?v=GuIav71867E (Accessed  11/05/2025).
+- Mcconell, S. (2004) Code Complete: A Practical Handbook of Software Construction. (2nd edition) (s.l.): Microsoft Press US.
+- MetaHuman | Realistic Person Creator (s.d.) At: https://www.unrealengine.com/en-US/metahuman (Accessed  06/04/2025).
+- Metal Gear Solid 3 Review – CXF | Culture Crossfire | culturecrossfire.com (s.d.) At: https://culturecrossfire.com/gaming/ps3/metal-gear-solid-3-snake-eater-subsistence-retro-review/ (Accessed  17/05/2025).
+- Metal Gear Solid 3: Snake Eater reviews (s.d.) At: https://www.mobygames.com/game/15735/metal-gear-solid-3-snake-eater/reviews/ (Accessed  17/05/2025).
+- Moriarty, C. (2012) Sleeping Dogs Review. At: https://www.ign.com/articles/2012/08/14/sleeping-dogs-review (Accessed  17/05/2025).
+- RPG Codex Interview: Dan Vávra (Warhorse Studios) :: rpg codex > doesn’t scale to your level (s.d.) At: https://rpgcodex.net/content.php?id=8776 (Accessed  17/05/2025).
+- Sleeping Dogs: Drunken Fist Combat Gameplay - 4K 60FPS (2021) At: https://www.youtube.com/watch?v=jZySMyIsyl8 (Accessed  17/05/2025).
+- Sleeping Dogs Reviews (s.d.) At: https://www.metacritic.com/game/sleeping-dogs/ (Accessed  17/05/2025).
+- SOLID Definition – the SOLID Principles of Object-Oriented Design Explained (2022) At: https://www.freecodecamp.org/news/solid-principles-single-responsibility-principle-explained/ (Accessed  17/05/2025).
+- Stat Commands in Unreal Engine | Unreal Engine 5.5 Documentation | Epic Developer Community (s.d.) At: https://dev.epicgames.com/documentation/en-us/unreal-engine/stat-commands-in-unreal-engine (Accessed  21/05/2025).
+- State Tree Deep Dive | Unreal Fest 2024 (2024) At: https://www.youtube.com/watch?v=YEmq4kcblj4 (Accessed  11/05/2025).
+- This Is What Creative Stealth Looks Like In MGS3 (2023) At: https://www.youtube.com/watch?v=9egLjM139ms (Accessed  17/05/2025).
+- Unreal Engine UProperties | Unreal Engine 5.5 Documentation | Epic Developer Community (s.d.) At: https://dev.epicgames.com/documentation/en-us/unreal-engine/unreal-engine-uproperties (Accessed  12/05/2025).
+
 
 ## Declared Assets
 Assets generated by ChatGPT:
 - DevelopmentCommentary.md
 
-Sound effects:
-- Crowd sounds:
-https://freesound.org/people/DavBlahBlah/sounds/632294/
-https://freesound.org/people/timothyd4y/sounds/472606/
+Assets brought or Created by Sam Lake:
+- Highschool Moshpit - level design and assets
+- Highschool Moshpit - Talkable NPCs dialogues were finalized by Sam
+- Tropical Car Wash - level design and assets
+- All of the initial Metahumans (before being turned into data assets)
+- Main Menu Level - level design and assets
+- Main Menu Level - graffiti buttons
+- Main Menu Level - sound 
 
-- Mumbling sound
-https://freesound.org/people/so0rec/sounds/542589/
+
