@@ -8,5 +8,6 @@ enum class EMenuButtonAction : uint8
 	None,
 	FightDemo,
 	Options,
+	QuitOptions,
 	Quit
 };

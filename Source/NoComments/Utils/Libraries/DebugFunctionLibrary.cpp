@@ -2,6 +2,8 @@
 
 #include "DebugFunctionLibrary.h"
 
+#include "AudioDevice.h"
+
 void UDebugFunctionLibrary::ThrowDebugError(const FString& CallerFunction, const FString& ErrorMessage)
 {
 #if !UE_BUILD_SHIPPING
